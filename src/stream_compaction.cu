@@ -66,9 +66,15 @@ void compactNaiveGPU(const Point2D* d_in, Point2D* d_out, int N, int& h_outCount
     cudaMalloc(&d_counter, sizeof(int));
     cudaMemset(d_counter, 0, sizeof(int));
 
-    int threads = 256;
-    int blocks  = (N + threads - 1) / threads;
-    streamCompactNaive<<<blocks, threads>>>(d_in, d_out, N, d_counter);
+    // int threads = 256;
+    // int blocks  = (N + threads - 1) / threads;
+    // streamCompactNaive<<<blocks, threads>>>(d_in, d_out, N, d_counter);
+
+    // 🔧 Standard dim3 configuration
+    dim3 dimBlock(BLOCK_SIZE);
+    dim3 dimGrid((N + BLOCK_SIZE  - 1) / BLOCK_SIZE );
+
+    streamCompactNaive<<<dimGrid, dimBlock>>>(d_in, d_out, N, d_counter);
 
     cudaMemcpy(&h_outCount, d_counter, sizeof(int), cudaMemcpyDeviceToHost);
     cudaFree(d_counter);
@@ -154,34 +160,35 @@ __global__ void streamCompactShared(const Point2D* in,
 void compactSharedGPU(const Point2D* d_in, Point2D* d_out, int N,
                       float threshold, int& h_outCount)
 {
-    int threads = 256;
-    int blocks  = (N + threads - 1) / threads;
+    dim3 dimBlock(BLOCK_SIZE);
+    dim3 dimGrid((N + BLOCK_SIZE - 1) / BLOCK_SIZE);
 
     // Allocate device memory for per-block counts
     int* d_block_counts;
-    cudaMalloc(&d_block_counts, blocks * sizeof(int));
+    cudaMalloc(&d_block_counts, dimGrid.x * sizeof(int));  // use dimGrid.x blocks
 
     // Calculate shared memory size: flags + Point2D array
-    size_t shared_mem_bytes = threads * (sizeof(unsigned int) + sizeof(Point2D));
+    size_t shared_mem_bytes = dimBlock.x * (sizeof(unsigned int) + sizeof(Point2D));
 
     // Launch shared memory kernel
-    streamCompactShared<<<blocks, threads, shared_mem_bytes>>>(
+    streamCompactShared<<<dimGrid, dimBlock, shared_mem_bytes>>>(
         d_in, d_out, N, threshold, d_block_counts);
 
     // Copy per-block results back to host
-    std::vector<int> h_block_counts(blocks);
+    std::vector<int> h_block_counts(dimGrid.x);
     cudaMemcpy(h_block_counts.data(), d_block_counts,
-               blocks * sizeof(int), cudaMemcpyDeviceToHost);
+               dimGrid.x * sizeof(int), cudaMemcpyDeviceToHost);
 
     // Sum block counts to get total compacted output count
     h_outCount = 0;
-    for (int i = 0; i < blocks; ++i) {
+    for (int i = 0; i < dimGrid.x; ++i) {
         h_outCount += h_block_counts[i];
     }
 
     // Free temporary device memory
     cudaFree(d_block_counts);
 }
+
 
 /**
  * @brief Test the naive GPU stream compaction method with timing.
@@ -230,7 +237,7 @@ void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, 
 }
 
 /**
- * @brief Test the shared memory + block scan GPU stream compaction method with timing.
+ * @brief Test the shared memory + block scan GPU stream compaction method        with timing.
  *
  * This function allocates memory, launches the optimized shared memory compaction kernel,
  * copies results back to host, and reports execution time.
@@ -271,6 +278,334 @@ void testSharedGPUCompaction(const std::vector<Point2D>& input, float threshold,
 
     cudaFree(d_input);
     cudaFree(d_output);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+
+// ==============================================
+// Warp Shuffle Stream Compaction Kernel (Intra-Warp Prefix Scan + Ballot)
+// ==============================================
+
+/**
+ * @brief Stream-compaction kernel that keeps “hot” points using a hybrid
+ *        shuffle prefix-scan and warp ballot.
+ *
+ * Workflow per thread:
+ * 1.  Evaluate @p isHotPredicateDevice to decide whether the element is kept.
+ * 2.  Perform an intra-warp exclusive prefix sum of the keep votes via
+ *     @c __shfl_up_sync.
+ * 3.  Obtain the warp-wide keep count with @c __ballot_sync + @c __popc
+ *     (works for partial warps).
+ * 4.  Lane 0 of every warp writes its count to @p warp_sum[] in shared memory.
+ * 5.  Each thread computes its final write position:
+ *        write_idx = global_offset + block_offset + prefix - 1
+ * 6.  Threads with @p keep == true write their @p Point2D to the compacted
+ *     output array.
+ *
+ * @param d_input     Device pointer to the input @p Point2D array
+ * @param d_output    Device pointer to the compacted output array
+ * @param d_count     Device pointer to a single int that receives the final
+ *                    number of compacted elements
+ * @param num_points  Total number of input elements
+ */
+__global__ void compactPointsWarpShuffle(
+    Point2D*  d_input,
+    Point2D*  d_output,
+    int*      d_count,
+    int       num_points)
+{
+    /* ------------------------------------------------------------------ *
+     * 0. Initialise per-warp counters in shared memory                    *
+     * ------------------------------------------------------------------ */
+    __shared__ int warp_sum[BLOCK_SIZE / 32];          // max 32 warps / block
+    if (threadIdx.x < BLOCK_SIZE / 32) warp_sum[threadIdx.x] = 0;
+    __syncthreads();
+
+    /* ------------------------------------------------------------------ *
+     * 1. Compute predicate                                                *
+     * ------------------------------------------------------------------ */
+    int gid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (gid >= num_points) return;
+
+    Point2D pt   = d_input[gid];
+    bool    keep = isHotPredicateDevice(pt);
+    int     vote = keep ? 1 : 0;
+
+    /* ------------------------------------------------------------------ *
+     * 2. Warp-level prefix scan using shuffles                            *
+     * ------------------------------------------------------------------ */
+    int lane = threadIdx.x & 31;        // lane ID inside warp
+    int warp = threadIdx.x >> 5;        // warp ID inside block
+
+    int prefix = vote;
+    #pragma unroll
+    for (int off = 1; off < 32; off <<= 1)
+    {
+        int n = __shfl_up_sync(0xffffffff, prefix, off);
+        if (lane >= off) prefix += n;
+    }                                   // prefix is 1-based for kept threads
+
+    /* ------------------------------------------------------------------ *
+     * 3. Warp total via ballot + popc (handles partial warps)            *
+     * ------------------------------------------------------------------ */
+    unsigned int mask       = __ballot_sync(0xffffffff, keep);
+    int          warp_total = __popc(mask);            // kept count in warp
+
+    if (lane == 0) warp_sum[warp] = warp_total;
+    __syncthreads();
+
+    /* ------------------------------------------------------------------ *
+     * 4. Block-exclusive prefix of warp totals                           *
+     * ------------------------------------------------------------------ */
+    int block_offset = 0;
+    for (int i = 0; i < warp; ++i)
+        block_offset += warp_sum[i];
+
+    int local_pos = block_offset + prefix - 1;         // 0-based index inside block
+
+    /* ------------------------------------------------------------------ *
+     * 5. Reserve global output space once per block                      *
+     * ------------------------------------------------------------------ */
+    __shared__ int global_offset;
+    if (threadIdx.x == 0)
+    {
+        int block_total = 0;
+        int warps_in_block = (blockDim.x + 31) >> 5;
+        for (int i = 0; i < warps_in_block; ++i)
+            block_total += warp_sum[i];
+
+        global_offset = atomicAdd(d_count, block_total);
+    }
+    __syncthreads();                                   // global_offset ready
+
+    /* ------------------------------------------------------------------ *
+     * 6. Write kept element                                              *
+     * ------------------------------------------------------------------ */
+    if (keep)
+        d_output[global_offset + local_pos] = pt;
+}
+
+/**
+ * @brief Host wrapper for warp-shuffle-based stream compaction.
+ *
+ * Launches the compactPointsWarpShuffle CUDA kernel to compact the input
+ * array of Point2D based on the isHotPredicateDevice condition.
+ *
+ * @param d_input Device pointer to input Point2D array
+ * @param d_output Device pointer to output Point2D array
+ * @param d_count Device pointer to int that will hold the total number of compacted points
+ * @param num_points Number of input points
+ */
+void compact_points_warp(
+    Point2D* d_input,
+    Point2D* d_output,
+    int* d_count,
+    int num_points
+) {
+    const dim3 blockDim(BLOCK_SIZE);
+    const dim3 gridDim((num_points + BLOCK_SIZE - 1) / BLOCK_SIZE);
+
+    // Initialize compacted count to zero
+    cudaMemset(d_count, 0, sizeof(int));
+
+    compactPointsWarpShuffle<<<gridDim, blockDim>>>(
+        d_input, d_output, d_count, num_points
+    );
+    cudaDeviceSynchronize();
+}
+
+/**
+ * @brief Test warp-shuffle-based GPU compaction using given input and threshold.
+ *
+ * @param input Vector of input points
+ * @param threshold Threshold to determine "hot" points
+ * @param output Vector to store compacted results
+ */
+void testWarpGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
+    std::cout << "\n[GPU] Testing Warp Shuffle Stream Compaction..." << std::endl;
+
+    int N = input.size();
+
+    // Allocate device memory
+    Point2D* d_input;
+    Point2D* d_output;
+    int* d_count;
+    cudaMalloc(&d_input, N * sizeof(Point2D));
+    cudaMalloc(&d_output, N * sizeof(Point2D));
+    cudaMalloc(&d_count, sizeof(int));
+
+    // Copy input to device
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+    // Timing setup
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
+    // Launch wrapper
+    compact_points_warp(d_input, d_output, d_count, N);
+
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0.0f;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "    [Timing] Elapsed time: " << milliseconds << " ms\n";
+
+    // Copy results back
+    int h_count = 0;
+    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+    output.resize(h_count);
+    cudaMemcpy(output.data(), d_output, h_count * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+    std::cout << "    [Result] Compacted count = " << h_count << "\n";
+
+    // Cleanup
+    cudaFree(d_input);
+    cudaFree(d_output);
+    cudaFree(d_count);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+
+// ==============================================
+// Bitmask Stream Compaction Kernel (Ballot + popc)
+// ==============================================
+
+/**
+ * @brief CUDA kernel for stream compaction using warp-level bitmask voting.
+ *
+ * Each thread determines whether its assigned point meets the compaction condition.
+ * A warp-level bitmask is generated using __ballot_sync, and each thread calculates
+ * its compacted output index using __popc. This method minimizes shared memory use
+ * and offers high performance for warp-sized compaction.
+ *
+ * @param d_input Pointer to device-side input array of Point2D
+ * @param d_output Pointer to device-side output array for compacted points
+ * @param d_count Pointer to device-side int used to store final compacted count
+ * @param num_points Total number of input points
+ */
+__global__ void compactPointsBitmask(
+    const Point2D* d_input,
+    Point2D* d_output,
+    int* d_count,
+    int num_points
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= num_points) return;
+
+    Point2D pt = d_input[idx];
+    bool isHot = isHotPredicateDevice(pt);  // user-defined predicate
+
+    unsigned int lane_id = threadIdx.x % 32;
+    unsigned int warp_id = threadIdx.x / 32;
+
+    // Warp-wide vote: bitmask of active threads
+    unsigned int mask = __ballot_sync(0xffffffff, isHot);
+
+    // Count how many threads before me voted true
+    int local_pos = __popc(mask & ((1u << lane_id) - 1));
+
+    // Warp leader reserves space for this warp in global output
+    __shared__ int warp_offsets[BLOCK_SIZE / 32];
+    int total_in_warp = __popc(mask);
+
+    if (lane_id == 0) {
+        warp_offsets[warp_id] = atomicAdd(d_count, total_in_warp);
+    }
+
+    __syncthreads();
+
+    // Write point to compacted array if hot
+    if (isHot) {
+        int output_index = warp_offsets[warp_id] + local_pos;
+        d_output[output_index] = pt;
+    }
+}
+
+/**
+ * @brief Host wrapper to launch bitmask-based stream compaction kernel.
+ *
+ * Configures and launches compactPointsBitmask kernel to perform compaction
+ * using warp-level ballot and popc instructions.
+ *
+ * @param d_input Device pointer to input array of Point2D
+ * @param d_output Device pointer to output array for compacted results
+ * @param d_count Device pointer to an int for storing compacted count
+ * @param num_points Number of input points
+ */
+void compact_points_bitmask(
+    const Point2D* d_input,
+    Point2D* d_output,
+    int* d_count,
+    int num_points
+) {
+    const dim3 blockDim(BLOCK_SIZE);
+    const dim3 gridDim((num_points + BLOCK_SIZE - 1) / BLOCK_SIZE);
+
+    cudaMemset(d_count, 0, sizeof(int));
+
+    compactPointsBitmask<<<gridDim, blockDim>>>(
+        d_input, d_output, d_count, num_points
+    );
+    cudaDeviceSynchronize();
+}
+
+/**
+ * @brief Test bitmask-based GPU stream compaction.
+ *
+ * @param input Input vector of Point2D
+ * @param threshold Threshold value to determine "hot" points
+ * @param output Output vector to store compacted result
+ */
+void testBitmaskGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
+    std::cout << "\n[GPU] Testing Bitmask Stream Compaction..." << std::endl;
+
+    int N = input.size();
+
+    // Allocate device memory
+    Point2D* d_input;
+    Point2D* d_output;
+    int* d_count;
+    cudaMalloc(&d_input, N * sizeof(Point2D));
+    cudaMalloc(&d_output, N * sizeof(Point2D));
+    cudaMalloc(&d_count, sizeof(int));
+
+    // Copy input to device
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+    // Set threshold if needed — skip this if you hardcoded in device predicate
+    // setHotPredicateThreshold(threshold);  // optional if threshold is global
+
+    // Timing setup
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
+    // Launch compaction
+    compact_points_bitmask(d_input, d_output, d_count, N);
+
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0.0f;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "    [Timing] Elapsed time: " << milliseconds << " ms\n";
+
+    // Copy result count and data back to host
+    int h_count = 0;
+    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+    output.resize(h_count);
+    cudaMemcpy(output.data(), d_output, h_count * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+    std::cout << "    [Result] Compacted count = " << h_count << "\n";
+
+    // Cleanup
+    cudaFree(d_input);
+    cudaFree(d_output);
+    cudaFree(d_count);
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 }

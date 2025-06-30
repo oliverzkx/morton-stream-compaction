@@ -12,6 +12,8 @@
 #include <vector>
 #include <string>
 
+#define BLOCK_SIZE 256
+
 // Declaration of the Morton encoding function (defined in morton.cu)
 __host__ __device__
 unsigned int morton2D_encode(unsigned int x, unsigned int y);

@@ -71,6 +71,14 @@ int main() {
     std::vector<Point2D> compacted_shared_gpu;
     testSharedGPUCompaction(points, threshold, compacted_shared_gpu);
 
+    // ✅ Step 6.2: test Warp Shuffle GPU compaction
+    std::vector<Point2D> compacted_warp_gpu;
+    testWarpGPUCompaction(points, threshold, compacted_warp_gpu);
+
+    // ✅ Step 6.3: test Bitmask GPU compaction
+    std::vector<Point2D> compacted_bitmask_gpu;
+    testBitmaskGPUCompaction(points, threshold, compacted_bitmask_gpu);
+
     // Step 7: print results
     std::cout << "\n🔥 Stream Compaction Results (threshold = " << threshold << ")\n";
     std::cout << "Original points count: " << points.size() << std::endl;
@@ -79,12 +87,18 @@ int main() {
     std::cout << "👉 Thrust GPU compaction:        " << compacted_thrust_gpu.size() << " points\n";
     std::cout << "👉 Naive GPU compaction (CUDA):  " << compacted_naive_gpu.size() << " points\n";
     std::cout << "👉 Shared memory GPU compaction: " << compacted_shared_gpu.size() << " points\n";
+    std::cout << "👉 Warp shuffle GPU compaction:  " << compacted_warp_gpu.size() << " points\n";
+    std::cout << "👉 Bitmask GPU compaction:       " << compacted_bitmask_gpu.size() << " points\n";
+
 
     printPointList(compacted_cpu,           "✅ CPU Compacted Points");
     printPointList(compacted_thrust_cpu,    "✅ Thrust CPU Compacted Points");
     printPointList(compacted_thrust_gpu,    "✅ Thrust GPU Compacted Points");
     printPointList(compacted_naive_gpu,     "✅ Naive GPU Compacted Points");
     printPointList(compacted_shared_gpu,    "✅ Shared Memory GPU Compacted Points");
+    printPointList(compacted_warp_gpu, "✅ Warp Shuffle GPU Compacted Points");
+    printPointList(compacted_bitmask_gpu, "✅ Bitmask GPU Compacted Points");
+
 
     return 0;
 }
