@@ -10,6 +10,7 @@
 #include <iostream>
 #include "common.h"
 #include "utils.h"
+#include "stream_compaction.h"
 
 
 /// Enum to select sorting method
@@ -63,16 +64,27 @@ int main() {
     std::vector<Point2D> compacted_thrust_cpu = compact_points_thrust(points, threshold, false);
     std::vector<Point2D> compacted_thrust_gpu = compact_points_thrust(points, threshold, true);
 
+   // ✅ Step 6.1: test CUDA compactions
+    std::vector<Point2D> compacted_naive_gpu;
+    testNaiveGPUCompaction(points, threshold, compacted_naive_gpu);
+
+    std::vector<Point2D> compacted_shared_gpu;
+    testSharedGPUCompaction(points, threshold, compacted_shared_gpu);
+
     // Step 7: print results
     std::cout << "\n🔥 Stream Compaction Results (threshold = " << threshold << ")\n";
     std::cout << "Original points count: " << points.size() << std::endl;
-    std::cout << "👉 CPU manual compaction:      " << compacted_cpu.size() << " points\n";
-    std::cout << "👉 Thrust CPU compaction:      " << compacted_thrust_cpu.size() << " points\n";
-    std::cout << "👉 Thrust GPU compaction:      " << compacted_thrust_gpu.size() << " points\n";
+    std::cout << "👉 CPU manual compaction:        " << compacted_cpu.size() << " points\n";
+    std::cout << "👉 Thrust CPU compaction:        " << compacted_thrust_cpu.size() << " points\n";
+    std::cout << "👉 Thrust GPU compaction:        " << compacted_thrust_gpu.size() << " points\n";
+    std::cout << "👉 Naive GPU compaction (CUDA):  " << compacted_naive_gpu.size() << " points\n";
+    std::cout << "👉 Shared memory GPU compaction: " << compacted_shared_gpu.size() << " points\n";
 
-    printPointList(compacted_cpu,         "✅ CPU Compacted Points");
-    printPointList(compacted_thrust_cpu,  "✅ Thrust CPU Compacted Points");
-    printPointList(compacted_thrust_gpu,  "✅ Thrust GPU Compacted Points");
+    printPointList(compacted_cpu,           "✅ CPU Compacted Points");
+    printPointList(compacted_thrust_cpu,    "✅ Thrust CPU Compacted Points");
+    printPointList(compacted_thrust_gpu,    "✅ Thrust GPU Compacted Points");
+    printPointList(compacted_naive_gpu,     "✅ Naive GPU Compacted Points");
+    printPointList(compacted_shared_gpu,    "✅ Shared Memory GPU Compacted Points");
 
     return 0;
 }

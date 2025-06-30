@@ -1,11 +1,11 @@
 # ==== Compiler & Flags ====
-NVCC    = nvcc
-CFLAGS  = -O2 -std=c++17          # ✅ Use C++17 for better features (GCC 11.4 fully supports it)
+NVCC     = nvcc
+CFLAGS   = -O2 -std=c++17         # ✅ Use C++17 for better features (GCC 11.4 fully supports it)
 INCLUDES = -Iinclude
 
 # ==== Files ====
 TARGET = build/main
-SRCS   = src/main.cu src/morton.cu src/utils.cu
+SRCS   = src/main.cu src/morton.cu src/utils.cu src/stream_compaction.cu
 OBJS   = $(SRCS:.cu=.o)
 
 # ==== Default rule ====
