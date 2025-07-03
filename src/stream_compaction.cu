@@ -4,6 +4,8 @@
 #include "common.h"          // <- contains typedef Point, predicate, etc.
 #include <iostream>
 
+__constant__ float d_threshold;
+
 // -------------------- device predicate --------------------
 /**
  * @brief Device-side predicate function.
@@ -11,10 +13,17 @@
  * @param p Input point
  * @return true if the point should be retained, false otherwise
  */
+/*
 __device__ inline bool isHotPredicateDevice(const Point2D& p)
 {
     isHotPredicate pred{30.0f}; 
     return pred(p);
+}
+*/
+
+__device__ inline bool isHotPredicateDevice(const Point2D& p)
+{
+    return isHotPoint(p, d_threshold);  // 使用 constant memory 中的 threshold
 }
 
 // -------------------- naïve kernel ------------------------
@@ -210,6 +219,9 @@ void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, 
     cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
     cudaMalloc(&d_output, N * sizeof(Point2D));
 
+    // 💡 Copy threshold value to constant memory before kernel launch
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
     // ⏱️ Start GPU timing
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -255,6 +267,10 @@ void testSharedGPUCompaction(const std::vector<Point2D>& input, float threshold,
     cudaMalloc(&d_input, N * sizeof(Point2D));
     cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
     cudaMalloc(&d_output, N * sizeof(Point2D));
+
+
+    // 💡 Copy threshold value to constant memory before kernel launch
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
 
     // ⏱️ Start GPU timing
     cudaEvent_t start, stop;
@@ -438,6 +454,9 @@ void testWarpGPUCompaction(const std::vector<Point2D>& input, float threshold, s
     // Copy input to device
     cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
 
+    // ✅ Copy threshold to constant memory
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
     // Timing setup
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -575,6 +594,9 @@ void testBitmaskGPUCompaction(const std::vector<Point2D>& input, float threshold
 
     // Copy input to device
     cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+    // ✅ Copy threshold to constant memory
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
 
     // Set threshold if needed — skip this if you hardcoded in device predicate
     // setHotPredicateThreshold(threshold);  // optional if threshold is global

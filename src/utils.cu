@@ -19,6 +19,8 @@
 #include <thrust/copy.h>
 #include <thrust/execution_policy.h>
 #include <algorithm>
+#include <stdio.h>
+#include <cuda_runtime.h>
 
 /**
  * @brief Print a 32-bit unsigned integer in binary format with an optional label.
@@ -90,6 +92,7 @@ std::vector<Point2D> generatePoints(int width, int height, float spacing, int se
  * @param points A vector of Point2D containing all the points to print.
  * @param title  Optional title string to label the print section.
  */
+/*
 void printPointList(const std::vector<Point2D>& points, const std::string& title) {
     // Print a title header if provided
     if (!title.empty()) {
@@ -103,6 +106,46 @@ void printPointList(const std::vector<Point2D>& points, const std::string& title
     }
     std::cout << std::endl;
 }
+*/
+
+/**
+ * @brief Print a list of 2D points including position, wind vector, and temperature.
+ *
+ * This function prints out each point in a given list, including its:
+ * - 2D position (x, y),
+ * - wind velocity vector (vx, vy),
+ * - temperature value.
+ *
+ * It optionally takes a title to label the printed section and supports limiting the number
+ * of printed points using the @p maxPrint parameter. If the list size exceeds @p maxPrint,
+ * only the first @p maxPrint points are shown, along with a summary message.
+ *
+ * @param points    A vector of Point2D containing all the points to print.
+ * @param title     Optional title string to label the output section (default: empty).
+ * @param maxPrint  Maximum number of points to print (default: 10).
+ */
+void printPointList(const std::vector<Point2D>& points, const std::string& title, int maxPrint) {
+    if (!title.empty()) {
+        std::cout << "🌐 " << title << " (" << points.size() << " points):" << std::endl;
+    }
+
+    int limit = std::min((int)points.size(), maxPrint);
+    for (int i = 0; i < limit; ++i) {
+        const auto& p = points[i];
+        std::cout << std::fixed << std::setprecision(2)
+                  << "  (" << p.x << ", " << p.y << ")"      // Position
+                  << "  V=(" << p.vx << ", " << p.vy << ")"  // Wind vector
+                  << "  Temp=" << p.temp << std::endl;       // Temperature
+    }
+
+    if ((int)points.size() > maxPrint) {
+        std::cout << "  ... [Showing first " << maxPrint 
+                  << " of total " << points.size() << " points]" << std::endl;
+    }
+
+    std::cout << std::endl;
+}
+
 
 /**
  * @brief Debug helper to visualize the bit expansion used in Morton encoding.
@@ -286,4 +329,163 @@ std::vector<Point2D> compact_points_thrust(const std::vector<Point2D>& input, fl
         thrust::copy(h_output.begin(), h_output.begin() + numValid, result.begin());
         return result;
     }
+}
+
+
+
+/**
+ * @brief Choose the best CUDA device based on multiprocessor count × CUDA cores per SM.
+ *
+ * This function enumerates all CUDA-enabled devices, prints their capabilities and memory info,
+ * and selects the one with the most compute cores as the active device.
+ *
+ * @param verbose If true, prints detailed info.
+ * @return Number of CUDA devices found.
+ */
+int chooseCudaCard(bool verbose) {
+	int i, numberOfDevices, best, bestNumberOfMultiprocessors;
+	int numberOfCUDAcoresForThisCC = 0;
+	struct cudaDeviceProp x;
+
+	// Get total number of CUDA devices
+	if (cudaGetDeviceCount(&numberOfDevices) != cudaSuccess) {
+		printf("No CUDA-enabled devices were found\n");
+	}
+	printf("***************************************************\n");
+	printf("Found %d CUDA-enabled devices\n", numberOfDevices);
+	best = -1;
+	bestNumberOfMultiprocessors = -1;
+
+	// Loop through each device to display info and choose the best one
+	for (i = 0; i < numberOfDevices; i++) {
+		cudaGetDeviceProperties(&x, i);
+
+		printf("========================= IDENTITY DATA ==================================\n");
+		printf("GPU model name: %s\n", x.name);  // GPU name
+		if (x.integrated == 1)
+			printf("GPU The device is an integrated (motherboard) GPU\n");
+		else
+			printf("GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device\n");
+
+		// PCI bus/device/domain help identify where the GPU is attached on the motherboard
+		printf("GPU pciBusID: %d\n", x.pciBusID);
+		printf("GPU pciDeviceID: %d\n", x.pciDeviceID);
+		printf("GPU pciDomainID: %d\n", x.pciDomainID);
+
+		// Tesla GPUs often use TCC driver (used for server or headless compute)
+		if (x.tccDriver == 1)
+			printf("the device is a Tesla one using TCC driver\n");
+		else
+			printf("the device is NOT a Tesla one using TCC driver\n");
+
+		printf("========================= COMPUTE DATA ==================================\n");
+		printf("GPU Compute capability: %d.%d\n", x.major, x.minor); // Architecture version
+
+		// Determine number of cores per SM based on compute capability
+		switch (x.major) {
+			case 1: numberOfCUDAcoresForThisCC = 8; break;
+			case 2: numberOfCUDAcoresForThisCC = 32; break;
+			case 3: numberOfCUDAcoresForThisCC = 192; break;
+			case 5: numberOfCUDAcoresForThisCC = 128; break;
+			case 6:
+				switch (x.minor) {
+					case 0: numberOfCUDAcoresForThisCC = 64; break;
+					case 1: numberOfCUDAcoresForThisCC = 128; break;
+					default: numberOfCUDAcoresForThisCC = 0; break;
+				}
+				numberOfCUDAcoresForThisCC = 128;
+				break;
+			case 7: numberOfCUDAcoresForThisCC = 64; break;
+			case 8:
+				switch (x.minor) {
+					case 0: numberOfCUDAcoresForThisCC = 64; break;
+					case 9: numberOfCUDAcoresForThisCC = 128; break;
+					default: numberOfCUDAcoresForThisCC = 64; break;
+				}
+				break;
+			case 9: numberOfCUDAcoresForThisCC = 128; break;
+			case 10: numberOfCUDAcoresForThisCC = 128; break;
+			default: numberOfCUDAcoresForThisCC = 0; break;
+		}
+
+		// Select the best GPU by comparing total compute cores (SMs × cores/SM)
+		if (x.multiProcessorCount > bestNumberOfMultiprocessors * numberOfCUDAcoresForThisCC) {
+			best = i;
+			bestNumberOfMultiprocessors = x.multiProcessorCount * numberOfCUDAcoresForThisCC;
+		}
+
+		printf("GPU Clock frequency in hertzs: %d\n", x.clockRate); // GPU clock speed
+		printf("GPU Device can concurrently copy memory and execute a kernel: %d\n", x.deviceOverlap); // 1 = yes
+		printf("GPU number of multi-processors: %d\n", x.multiProcessorCount); // SM count
+		printf("GPU maximum number of threads per multi-processor: %d\n", x.maxThreadsPerMultiProcessor);
+		printf("GPU Maximum size of each dimension of a grid: %dx%dx%d\n", x.maxGridSize[0], x.maxGridSize[1], x.maxGridSize[2]);
+		printf("GPU Maximum size of each dimension of a block: %dx%dx%d\n", x.maxThreadsDim[0], x.maxThreadsDim[1], x.maxThreadsDim[2]);
+		printf("GPU Maximum number of threads per block: %d\n", x.maxThreadsPerBlock);
+		printf("GPU Maximum pitch in bytes allowed by memory copies: %lu\n", x.memPitch);
+		printf("GPU Compute mode is: %d\n", x.computeMode); // 0: Default, 1: Exclusive
+
+		printf("========================= MEMORY DATA ==================================\n");
+		printf("GPU total global memory: %lu bytes\n", x.totalGlobalMem); // Total global memory
+		printf("GPU peak memory clock frequency in kilohertz: %d bytes\n", x.memoryClockRate);
+		printf("GPU memory bus width: %d bits\n", x.memoryBusWidth);
+		printf("GPU L2 cache size: %d bytes\n", x.l2CacheSize);
+		printf("GPU 32-bit registers available per block: %d\n", x.regsPerBlock);
+		printf("GPU Shared memory available per block in bytes: %lu\n", x.sharedMemPerBlock);
+		printf("GPU Alignment requirement for textures: %lu\n", x.textureAlignment);
+		printf("GPU Constant memory available on device in bytes: %lu\n", x.totalConstMem);
+		printf("GPU Warp size in threads: %d\n", x.warpSize); // usually 32
+
+		// Maximum texture sizes supported (useful for image data and surface memory)
+		printf("GPU maximum 1D texture size: %d\n", x.maxTexture1D);
+		printf("GPU maximum 2D texture size: %d x %d\n", x.maxTexture2D[0], x.maxTexture2D[1]);
+		printf("GPU maximum 3D texture size: %d x %d x %d\n", x.maxTexture3D[0], x.maxTexture3D[1], x.maxTexture3D[2]);
+		printf("GPU maximum 1D layered texture dimensions: %d x %d\n", x.maxTexture1DLayered[0], x.maxTexture1DLayered[1]);
+		printf("GPU maximum 2D layered texture dimensions: %d x %d x %d\n", x.maxTexture2DLayered[0], x.maxTexture2DLayered[1], x.maxTexture2DLayered[2]);
+
+		printf("GPU surface alignment: %lu\n", x.surfaceAlignment);
+
+		if (x.canMapHostMemory == 1)
+			printf("GPU The device can map host memory into the CUDA address space\n");
+
+		else
+			printf("GPU The device can NOT map host memory into the CUDA address space\n");
+
+		if (x.ECCEnabled == 1)
+			printf("GPU memory has ECC support\n");
+		else
+			printf("GPU memory does not have ECC support\n");
+
+		if (x.ECCEnabled == 1)
+			printf("GPU The device shares an unified address space with the host\n");
+		else
+			printf("GPU The device DOES NOT share an unified address space with the host\n");
+
+		printf("========================= EXECUTION DATA ==================================\n");
+		if (x.concurrentKernels == 1)
+			printf("GPU Concurrent kernels are allowed\n");
+		else
+			printf("GPU Concurrent kernels are NOT allowed\n");
+
+		if (x.kernelExecTimeoutEnabled == 1)
+			printf("GPU There is a run time limit for kernels executed in the device\n");
+		else
+			printf("GPU There is NOT a run time limit for kernels executed in the device\n");
+
+		if (x.asyncEngineCount == 1)
+			printf("GPU The device can concurrently copy memory between host and device while executing a kernel\n");
+		else if (x.asyncEngineCount == 2)
+			printf("GPU The device can concurrently copy memory between host and device in both directions and execute a kernel at the same time\n");
+		else
+			printf("GPU the device is NOT capable of concurrently memory copying\n");
+	}
+
+	// Finally set the best device
+	if (best >= 0) {
+		cudaGetDeviceProperties(&x, best);
+		printf("Choosing %s\n", x.name);
+		cudaSetDevice(best);
+	}
+
+	printf("***************************************************\n");
+	return (numberOfDevices);
 }

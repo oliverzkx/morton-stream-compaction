@@ -21,7 +21,8 @@ void binary_test();
 std::vector<Point2D> generatePoints(int width, int height, float spacing = 1.0f, int seed = -1);
 
 /// Print a list of points with position, wind, and temperature
-void printPointList(const std::vector<Point2D>& points, const std::string& title = "");
+//void printPointList(const std::vector<Point2D>& points, const std::string& title = "");
+void printPointList(const std::vector<Point2D>& points, const std::string& title, int maxPrint);
 
 /// Print an unsigned int in binary format with a label
 void print_binary(unsigned int val, const std::string& label = "");
@@ -37,3 +38,6 @@ std::vector<Point2D> compact_stream_cpu(const std::vector<Point2D>& points, floa
 
 /// Perform stream compaction using Thrust (GPU or CPU backend)
 std::vector<Point2D> compact_points_thrust(const std::vector<Point2D>& input, float threshold, bool useGPU = true);
+
+/// Choose the best CUDA device based on multiprocessor count and CUDA cores
+int chooseCudaCard(bool verbose = true);
