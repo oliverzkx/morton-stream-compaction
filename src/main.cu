@@ -112,29 +112,38 @@ int main(int argc, char* argv[]) {
     }
 
     if (runGPU) {
-        std::vector<Point2D> compacted_thrust_gpu = compact_points_thrust(points, threshold, true);
-        std::vector<Point2D> compacted_naive_gpu;
-        std::vector<Point2D> compacted_shared_gpu;
-        std::vector<Point2D> compacted_warp_gpu;
-        std::vector<Point2D> compacted_bitmask_gpu;
+    std::vector<Point2D> compacted_thrust_gpu = compact_points_thrust(points, threshold, true);
+    std::vector<Point2D> compacted_naive_gpu;
+    std::vector<Point2D> compacted_shared_gpu;
+    std::vector<Point2D> compacted_warp_gpu;
+    std::vector<Point2D> compacted_bitmask_gpu;
+    std::vector<Point2D> compacted_surface_gpu;  // ✅ New
 
-        testNaiveGPUCompaction(points, threshold, compacted_naive_gpu);
-        testSharedGPUCompaction(points, threshold, compacted_shared_gpu);
-        testWarpGPUCompaction(points, threshold, compacted_warp_gpu);
-        testBitmaskGPUCompaction(points, threshold, compacted_bitmask_gpu);
+    testNaiveGPUCompaction(points, threshold, compacted_naive_gpu);
+    testSharedGPUCompaction(points, threshold, compacted_shared_gpu);
+    testWarpGPUCompaction(points, threshold, compacted_warp_gpu);
+    testBitmaskGPUCompaction(points, threshold, compacted_bitmask_gpu);
 
-        std::cout << "👉 Thrust GPU compaction:        " << compacted_thrust_gpu.size() << " points\n";
-        std::cout << "👉 Naive GPU compaction (CUDA):  " << compacted_naive_gpu.size() << " points\n";
-        std::cout << "👉 Shared memory GPU compaction: " << compacted_shared_gpu.size() << " points\n";
-        std::cout << "👉 Warp shuffle GPU compaction:  " << compacted_warp_gpu.size() << " points\n";
-        std::cout << "👉 Bitmask GPU compaction:       " << compacted_bitmask_gpu.size() << " points\n";
+    // ✅ Surface version (does not fill compacted_surface_gpu directly)
+    int surface_width = 1024;  // You can choose 512, 1024, or 2048 depending on expected count
+    testBitmaskSurfaceGPUCompaction(points, threshold, surface_width);
 
-        printPointList(compacted_thrust_gpu,  "✅ Thrust GPU Compacted Points", maxPrint);
-        printPointList(compacted_naive_gpu,   "✅ Naive GPU Compacted Points", maxPrint);
-        printPointList(compacted_shared_gpu,  "✅ Shared Memory GPU Compacted Points", maxPrint);
-        printPointList(compacted_warp_gpu,    "✅ Warp Shuffle GPU Compacted Points", maxPrint);
-        printPointList(compacted_bitmask_gpu, "✅ Bitmask GPU Compacted Points", maxPrint);
-    }
+    std::cout << "👉 Thrust GPU compaction:        " << compacted_thrust_gpu.size() << " points\n";
+    std::cout << "👉 Naive GPU compaction (CUDA):  " << compacted_naive_gpu.size() << " points\n";
+    std::cout << "👉 Shared memory GPU compaction: " << compacted_shared_gpu.size() << " points\n";
+    std::cout << "👉 Warp shuffle GPU compaction:  " << compacted_warp_gpu.size() << " points\n";
+    std::cout << "👉 Bitmask GPU compaction:       " << compacted_bitmask_gpu.size() << " points\n";
+    std::cout << "👉 Bitmask Surface GPU compact.: ✅ Tested (output in surface memory)\n";
+
+    printPointList(compacted_thrust_gpu,  "✅ Thrust GPU Compacted Points", maxPrint);
+    printPointList(compacted_naive_gpu,   "✅ Naive GPU Compacted Points", maxPrint);
+    printPointList(compacted_shared_gpu,  "✅ Shared Memory GPU Compacted Points", maxPrint);
+    printPointList(compacted_warp_gpu,    "✅ Warp Shuffle GPU Compacted Points", maxPrint);
+    printPointList(compacted_bitmask_gpu, "✅ Bitmask GPU Compacted Points", maxPrint);
+
+    // 🟡 Optionally: add code to read from surface and fill `compacted_surface_gpu` if needed
+}
+
 
     return 0;
 }

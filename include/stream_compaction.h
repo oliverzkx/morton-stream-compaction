@@ -26,8 +26,24 @@ void compact_points_warp(Point2D* d_input, Point2D* d_output, int* d_count, int 
 /// Bitmask-based compaction kernel using __ballot_sync and __popc
 __global__ void compactPointsBitmask(const Point2D* d_input, Point2D* d_output, int* d_count, int num_points);
 
+__global__ void compactPointsBitmaskSurface(
+    const Point2D* d_input,
+    cudaSurfaceObject_t surfaceOutput,
+    int* d_count,
+    int num_points,
+    int surface_width
+);
+
 /// Host wrapper to launch Bitmask compaction kernel
 void compact_points_bitmask(const Point2D* d_input, Point2D* d_output, int* d_count, int num_points);
+
+void compact_points_bitmask_surface(
+    const Point2D* d_input,
+    cudaSurfaceObject_t surfaceOutput,
+    int* d_count,
+    int num_points,
+    int surface_width
+);
 
 /// Test: Naive GPU compaction
 void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output);
@@ -40,3 +56,5 @@ void testWarpGPUCompaction(const std::vector<Point2D>& input, float threshold, s
 
 /// Test: Bitmask GPU compaction
 void testBitmaskGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output);
+
+void testBitmaskSurfaceGPUCompaction(const std::vector<Point2D>& input, float threshold, int surface_width);

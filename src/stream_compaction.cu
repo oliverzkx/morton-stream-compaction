@@ -209,6 +209,7 @@ void compactSharedGPU(const Point2D* d_in, Point2D* d_out, int N,
  * @param threshold    Temperature threshold for filtering.
  * @param output       Vector to store the compacted results.
  */
+/*
 void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
     int N = input.size();
     Point2D* d_input = nullptr;
@@ -247,6 +248,68 @@ void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, 
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 }
+*/
+
+/**
+ * @brief Test the naive GPU stream compaction method with full timing.
+ *
+ * This function allocates device memory, transfers input data,
+ * launches the naive compaction kernel, retrieves results, and
+ * reports the total GPU execution time including memory operations.
+ *
+ * @param input        Input vector of Point2D elements.
+ * @param threshold    Temperature threshold for filtering.
+ * @param output       Vector to store the compacted results.
+ */
+void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
+    std::cout << "\n[GPU] Testing Naive Stream Compaction..." << std::endl;
+
+    int N = input.size();
+    Point2D* d_input = nullptr;
+    Point2D* d_output = nullptr;
+    int compactedCount = 0;
+
+    // Create CUDA event timer
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    // ✅ Start full GPU timing here (includes malloc, memcpy, kernel, copy back, free)
+    cudaEventRecord(start);
+
+    // Allocate and copy input
+    cudaMalloc(&d_input, N * sizeof(Point2D));
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+    cudaMalloc(&d_output, N * sizeof(Point2D));
+
+    // Copy threshold to constant memory
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
+    // Call your original kernel (compactedCount passed by reference)
+    compactNaiveGPU(d_input, d_output, N, compactedCount);
+
+    // Resize and copy result back to host
+    output.resize(compactedCount);
+    cudaMemcpy(output.data(), d_output, compactedCount * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+    // Free memory
+    cudaFree(d_input);
+    cudaFree(d_output);
+
+    // ✅ Stop full GPU timing
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    std::cout << "⏱️ Naive GPU total time (including memory ops): " << milliseconds << " ms\n";
+    std::cout << "📌 Compacted count: " << compactedCount << "\n";
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+
 
 /**
  * @brief Test the shared memory + block scan GPU stream compaction method        with timing.
@@ -258,6 +321,7 @@ void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, 
  * @param threshold    Temperature threshold for filtering.
  * @param output       Vector to store the compacted results.
  */
+/*
 void testSharedGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
     int N = input.size();
     Point2D* d_input = nullptr;
@@ -294,6 +358,62 @@ void testSharedGPUCompaction(const std::vector<Point2D>& input, float threshold,
 
     cudaFree(d_input);
     cudaFree(d_output);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+*/
+
+/**
+ * @brief Test the shared memory + block scan GPU stream compaction method with timing.
+ *
+ * This function allocates memory, launches the optimized shared memory compaction kernel,
+ * copies results back to host, and reports full GPU execution time including memory operations.
+ *
+ * @param input        Input vector of Point2D elements.
+ * @param threshold    Temperature threshold for filtering.
+ * @param output       Vector to store the compacted results.
+ */
+void testSharedGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
+    std::cout << "\n[GPU] Testing Shared Memory Stream Compaction..." << std::endl;
+
+    int N = input.size();
+    Point2D* d_input = nullptr;
+    Point2D* d_output = nullptr;
+    int compactedCount = 0;
+
+    // ⏱️ Start full GPU timing (includes malloc, memcpy, kernel, and result copy)
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
+    // Allocate and copy input
+    cudaMalloc(&d_input, N * sizeof(Point2D));
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+    cudaMalloc(&d_output, N * sizeof(Point2D));
+
+    // Copy threshold to constant memory
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
+    // Launch your original kernel (with threshold as argument)
+    compactSharedGPU(d_input, d_output, N, threshold, compactedCount);
+
+    // Copy result back to host
+    output.resize(compactedCount);
+    cudaMemcpy(output.data(), d_output, compactedCount * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+    // Free memory
+    cudaFree(d_input);
+    cudaFree(d_output);
+
+    // ⏱️ Stop timing and print result
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "⏱️ Shared Memory GPU total time (including memory ops): " << milliseconds << " ms\n";
+    std::cout << "📌 Compacted count: " << compactedCount << "\n";
+
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 }
@@ -431,6 +551,8 @@ void compact_points_warp(
     cudaDeviceSynchronize();
 }
 
+
+
 /**
  * @brief Test warp-shuffle-based GPU compaction using given input and threshold.
  *
@@ -438,6 +560,7 @@ void compact_points_warp(
  * @param threshold Threshold to determine "hot" points
  * @param output Vector to store compacted results
  */
+/*
 void testWarpGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
     std::cout << "\n[GPU] Testing Warp Shuffle Stream Compaction..." << std::endl;
 
@@ -487,6 +610,66 @@ void testWarpGPUCompaction(const std::vector<Point2D>& input, float threshold, s
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 }
+*/
+
+/**
+ * @brief Test warp-shuffle-based GPU compaction using given input and threshold.
+ *
+ * @param input Vector of input points
+ * @param threshold Threshold to determine "hot" points
+ * @param output Vector to store compacted results
+ */
+void testWarpGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
+    std::cout << "\n[GPU] Testing Warp Shuffle Stream Compaction..." << std::endl;
+
+    int N = input.size();
+
+    // CUDA event timing setup
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);  // ✅ Start timing before any GPU activity
+
+    // Allocate device memory
+    Point2D* d_input;
+    Point2D* d_output;
+    int* d_count;
+    cudaMalloc(&d_input, N * sizeof(Point2D));
+    cudaMalloc(&d_output, N * sizeof(Point2D));
+    cudaMalloc(&d_count, sizeof(int));
+
+    // Copy input data to device
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+    // Copy threshold to constant memory
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
+    // Launch warp-based compaction kernel
+    compact_points_warp(d_input, d_output, d_count, N);
+
+    // Stop timing
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0.0f;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "⏱️ Warp Shuffle GPU total time (including memory ops): " << milliseconds << " ms\n";
+
+    // Copy results back to host
+    int h_count = 0;
+    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+    output.resize(h_count);
+    cudaMemcpy(output.data(), d_output, h_count * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+    std::cout << "📌 Compacted count: " << h_count << "\n";
+
+    // Cleanup
+    cudaFree(d_input);
+    cudaFree(d_output);
+    cudaFree(d_count);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
 
 
 // ==============================================
@@ -545,6 +728,55 @@ __global__ void compactPointsBitmask(
 }
 
 /**
+ * @brief CUDA kernel for stream compaction using warp-level bitmask voting, writing to surface memory.
+ *
+ * Each thread checks if its input point meets a "hot" condition (temp > d_threshold).
+ * Warp-level bitmask voting is used to compute output offsets.
+ * Each hot point is written as float4(vx, vy, temp, 1.0) to a 2D surface.
+ *
+ * @param d_input         Device pointer to input Point2D array
+ * @param surfaceOutput   CUDA surface object to write output
+ * @param d_count         Device pointer to int tracking compacted count
+ * @param num_points      Number of input points
+ * @param surface_width   Width of the surface in elements (used to compute x/y)
+ */
+__global__ void compactPointsBitmaskSurface(
+    const Point2D* d_input,
+    cudaSurfaceObject_t surfaceOutput,
+    int* d_count,
+    int num_points,
+    int surface_width
+) {
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= num_points) return;
+
+    Point2D pt = d_input[idx];
+    bool isHot = pt.temp > d_threshold;
+
+    unsigned int lane_id = threadIdx.x % 32;
+    unsigned int warp_id = threadIdx.x / 32;
+    unsigned int mask = __ballot_sync(0xffffffff, isHot);
+    int local_pos = __popc(mask & ((1U << lane_id) - 1));
+    int total_in_warp = __popc(mask);
+
+    __shared__ int warp_offsets[BLOCK_SIZE / 32];
+    if (lane_id == 0) {
+        warp_offsets[warp_id] = atomicAdd(d_count, total_in_warp);
+    }
+    __syncthreads();
+
+    if (isHot) {
+        int global_output_idx = warp_offsets[warp_id] + local_pos;
+        int x = global_output_idx % surface_width;
+        int y = global_output_idx / surface_width;
+
+        float4 outVal = make_float4(pt.vx, pt.vy, pt.temp, 1.0f);
+        surf2Dwrite(outVal, surfaceOutput, x * sizeof(float4), y);
+    }
+}
+
+
+/**
  * @brief Host wrapper to launch bitmask-based stream compaction kernel.
  *
  * Configures and launches compactPointsBitmask kernel to perform compaction
@@ -573,12 +805,40 @@ void compact_points_bitmask(
 }
 
 /**
+ * @brief Host wrapper for launching compactPointsBitmaskSurface kernel.
+ *
+ * @param d_input        Device input pointer
+ * @param surfaceOutput  Bound CUDA surface object (must be created in host)
+ * @param d_count        Device int pointer (should be zeroed before call)
+ * @param num_points     Number of input points
+ * @param surface_width  Width of the 2D surface in float4 elements
+ */
+void compact_points_bitmask_surface(
+    const Point2D* d_input,
+    cudaSurfaceObject_t surfaceOutput,
+    int* d_count,
+    int num_points,
+    int surface_width
+) {
+    dim3 blockDim(BLOCK_SIZE);
+    dim3 gridDim((num_points + blockDim.x - 1) / blockDim.x);
+
+    cudaMemset(d_count, 0, sizeof(int));  // ensure count starts from 0
+
+    compactPointsBitmaskSurface<<<gridDim, blockDim>>>(
+        d_input, surfaceOutput, d_count, num_points, surface_width
+    );
+    cudaDeviceSynchronize();
+}
+
+/**
  * @brief Test bitmask-based GPU stream compaction.
  *
  * @param input Input vector of Point2D
  * @param threshold Threshold value to determine "hot" points
  * @param output Output vector to store compacted result
  */
+/*
 void testBitmaskGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
     std::cout << "\n[GPU] Testing Bitmask Stream Compaction..." << std::endl;
 
@@ -631,3 +891,137 @@ void testBitmaskGPUCompaction(const std::vector<Point2D>& input, float threshold
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 }
+*/
+
+/**
+ * @brief Test bitmask-based GPU stream compaction.
+ *
+ * @param input Input vector of Point2D
+ * @param threshold Threshold value to determine "hot" points
+ * @param output Output vector to store compacted result
+ */
+void testBitmaskGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
+    std::cout << "\n[GPU] Testing Bitmask Stream Compaction..." << std::endl;
+
+    int N = input.size();
+
+    // CUDA timing setup
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);  // ✅ Start timing before all GPU operations
+
+    // Allocate device memory
+    Point2D* d_input;
+    Point2D* d_output;
+    int* d_count;
+    cudaMalloc(&d_input, N * sizeof(Point2D));
+    cudaMalloc(&d_output, N * sizeof(Point2D));
+    cudaMalloc(&d_count, sizeof(int));
+
+    // Copy input to device
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+    // Copy threshold to constant memory
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
+    // Launch bitmask-based compaction kernel
+    compact_points_bitmask(d_input, d_output, d_count, N);
+
+    // Stop timing
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0.0f;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "⏱️ Bitmask GPU total time (including memory ops): " << milliseconds << " ms\n";
+
+    // Copy result count and compacted data back to host
+    int h_count = 0;
+    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+    output.resize(h_count);
+    cudaMemcpy(output.data(), d_output, h_count * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+    std::cout << "📌 Compacted count: " << h_count << "\n";
+
+    // Cleanup
+    cudaFree(d_input);
+    cudaFree(d_output);
+    cudaFree(d_count);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+/**
+ * @brief Test bitmask stream compaction using CUDA surface memory.
+ *
+ * Measures total GPU execution time including memory allocation, data transfer,
+ * kernel launch, and surface operations.
+ *
+ * @param input Input vector of Point2D
+ * @param threshold Threshold for hot point selection
+ * @param surface_width Width of the 2D surface used to store results
+ */
+void testBitmaskSurfaceGPUCompaction(const std::vector<Point2D>& input, float threshold, int surface_width) {
+    std::cout << "\n[GPU] Testing Bitmask Surface Stream Compaction..." << std::endl;
+
+    int N = input.size();
+    int surface_height = (N + surface_width - 1) / surface_width;
+
+    // ✅ Start timing before ALL GPU operations
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
+    // Allocate device input
+    Point2D* d_input;
+    cudaMalloc(&d_input, N * sizeof(Point2D));
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+    // Allocate compacted count
+    int* d_count;
+    cudaMalloc(&d_count, sizeof(int));
+    cudaMemset(d_count, 0, sizeof(int));
+
+    // Create CUDA array and surface object
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float4>();
+    cudaArray_t cuArray;
+    cudaMallocArray(&cuArray, &channelDesc, surface_width, surface_height, cudaArraySurfaceLoadStore);
+
+    struct cudaResourceDesc resDesc = {};
+    resDesc.resType = cudaResourceTypeArray;
+    resDesc.res.array.array = cuArray;
+
+    cudaSurfaceObject_t surfaceObject = 0;
+    cudaCreateSurfaceObject(&surfaceObject, &resDesc);
+
+    // Copy threshold to constant memory
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
+    // Launch compaction into surface
+    compact_points_bitmask_surface(d_input, surfaceObject, d_count, N, surface_width);
+
+    // Copy compacted count back to host ✅
+    int h_count = 0;
+    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+
+    // Cleanup
+    cudaDestroySurfaceObject(surfaceObject);
+    cudaFreeArray(cuArray);
+    cudaFree(d_input);
+    cudaFree(d_count);
+
+    // ✅ Stop timing after ALL GPU operations
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float milliseconds = 0.0f;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "⏱️ Bitmask Surface GPU total time (including memory ops): " << milliseconds << " ms\n";
+
+    // ✅ Print final count (aligned with other outputs)
+    std::cout << "📌 Compacted count: " << h_count << "\n";
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
