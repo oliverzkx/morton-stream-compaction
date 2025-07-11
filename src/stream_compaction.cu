@@ -5,6 +5,8 @@
 #include <iostream>
 
 __constant__ float d_threshold;
+__constant__ double d_threshold_double;
+
 
 // -------------------- device predicate --------------------
 /**
@@ -24,6 +26,10 @@ __device__ inline bool isHotPredicateDevice(const Point2D& p)
 __device__ inline bool isHotPredicateDevice(const Point2D& p)
 {
     return isHotPoint(p, d_threshold);  // 使用 constant memory 中的 threshold
+}
+
+__device__ inline bool isHotPredicateDevice(const Point2D_double& p) {
+    return isHotPoint(p, d_threshold_double);  // d_threshold_double is __constant__ double
 }
 
 // -------------------- naïve kernel ------------------------
@@ -1021,6 +1027,251 @@ void testBitmaskSurfaceGPUCompaction(const std::vector<Point2D>& input, float th
     // ✅ Print final count (aligned with other outputs)
     std::cout << "📌 Compacted count: " << h_count << "\n";
 
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+
+/**
+ * @brief GPU bitmask stream compaction using float precision.
+ *
+ * This function launches the compact_points_bitmask kernel, measures
+ * the GPU execution time (including data transfer), and copies the
+ * result back to host.
+ *
+ * @param input     Input vector of Point2D
+ * @param threshold Temperature threshold for hot points
+ * @param blockSize Thread block size to use in kernel launch
+ * @param time_ms   Output variable to store measured time in ms
+ * @param output    Output vector storing compacted result
+ */
+void bitmask_stream_compaction_gpu_float(const std::vector<Point2D>& input,
+                                         float threshold,
+                                         int blockSize,
+                                         float& time_ms,
+                                         std::vector<Point2D>& output) {
+    int N = input.size();
+
+    // --- Setup CUDA timer ---
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
+    // --- Allocate memory ---
+    Point2D* d_input = nullptr;
+    Point2D* d_output = nullptr;
+    int* d_count = nullptr;
+
+    cudaMalloc(&d_input, N * sizeof(Point2D));
+    cudaMalloc(&d_output, N * sizeof(Point2D));
+    cudaMalloc(&d_count, sizeof(int));
+    cudaMemset(d_count, 0, sizeof(int));
+
+    // --- Copy input ---
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+    // --- Copy threshold to constant memory ---
+    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
+    // --- Kernel launch configuration ---
+    int gridSize = (N + blockSize - 1) / blockSize;
+    //compact_points_bitmask<<<gridSize, blockSize>>>(d_input, d_output, d_count, N);
+    compactPointsBitmask<<<gridSize, blockSize>>>(d_input, d_output, d_count, N);
+
+    // --- Copy results back ---
+    int h_count = 0;
+    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+    output.resize(h_count);
+    cudaMemcpy(output.data(), d_output, h_count * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+    // --- Stop timing ---
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time_ms, start, stop);
+
+    // --- Clean up ---
+    cudaFree(d_input);
+    cudaFree(d_output);
+    cudaFree(d_count);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+
+
+/**
+ * @brief CUDA kernel for stream compaction using warp-level bitmask voting (double version).
+ *
+ * Each thread determines whether its assigned point meets the compaction condition.
+ * A warp-level bitmask is generated using __ballot_sync, and each thread calculates
+ * its compacted output index using __popc. This version works on Point2D_double structure
+ * and uses double-precision threshold comparison.
+ *
+ * @param d_input Pointer to device-side input array of Point2D_double
+ * @param d_output Pointer to device-side output array for compacted points
+ * @param d_count Pointer to device-side int used to store final compacted count
+ * @param num_points Total number of input points
+ */
+__global__ void compact_points_bitmask_double(
+    const Point2D_double* d_input,
+    Point2D_double* d_output,
+    int* d_count,
+    int num_points
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= num_points) return;
+
+    Point2D_double pt = d_input[idx];
+    bool isHot = isHotPredicateDevice(pt);  // must be double version
+    //printf("debug isHot: idx = %d, isHot = %d, temp = %f\n", idx, isHot, pt.temp);
+
+    unsigned int lane_id = threadIdx.x % 32;
+    unsigned int warp_id = threadIdx.x / 32;
+
+    // Warp-wide vote: bitmask of active threads
+    unsigned int mask = __ballot_sync(0xffffffff, isHot);
+
+    // Count how many threads before me voted true
+    int local_pos = __popc(mask & ((1u << lane_id) - 1));
+
+    // Warp leader reserves space for this warp in global output
+    __shared__ int warp_offsets[BLOCK_SIZE / 32];
+    int total_in_warp = __popc(mask);
+
+    if (lane_id == 0) {
+        warp_offsets[warp_id] = atomicAdd(d_count, total_in_warp);
+    }
+
+    __syncthreads();
+
+    // Write point to compacted array if hot
+    if (isHot) {
+        int output_index = warp_offsets[warp_id] + local_pos;
+        d_output[output_index] = pt;
+    }
+}
+
+/**
+ * @brief Device-side predicate function for identifying "hot" points (double precision).
+ *
+ * This function determines whether a given 2D point exceeds the temperature threshold.
+ * It compares the temperature field `temp` of a Point2D_double against a constant
+ * double-precision threshold value `d_threshold_double`, which resides in device constant memory.
+ *
+ * @param pt The input point of type Point2D_double.
+ * @return true if the point's temperature is greater than the threshold; false otherwise.
+ */
+/*
+__device__ bool isHotPredicateDevice(Point2D_double pt) {
+    return pt.temp > d_threshold_double;
+}
+*/
+
+
+/**
+ * @brief GPU stream compaction using warp-level bitmask (double-precision version).
+ *
+ * This function allocates memory on the GPU, transfers input data,
+ * launches a bitmask-based stream compaction kernel operating on double-precision
+ * Point2D_double structures, and retrieves the compacted results.
+ *
+ * @param input Input vector of Point2D_double
+ * @param threshold Temperature threshold to determine "hot" points
+ * @param blockSize CUDA thread block size
+ * @param time_ms Output variable to store measured kernel time (in milliseconds)
+ * @param output Output vector of compacted Point2D_double results
+ */
+void bitmask_stream_compaction_gpu_double(const std::vector<Point2D_double>& input,
+                                          double threshold,
+                                          int blockSize,
+                                          float& time_ms,
+                                          std::vector<Point2D_double>& output) {
+    int N = input.size();
+    std::cout << "[DEBUG] Launching DOUBLE precision kernel with threshold = " << threshold << "\n";
+
+    // --- Setup CUDA timer ---
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
+    // --- Allocate memory ---
+    Point2D_double* d_input = nullptr;
+    Point2D_double* d_output = nullptr;
+    int* d_count = nullptr;
+
+    cudaMalloc(&d_input, N * sizeof(Point2D_double));
+    cudaMalloc(&d_output, N * sizeof(Point2D_double));
+    cudaMalloc(&d_count, sizeof(int));
+    cudaMemset(d_count, 0, sizeof(int));
+
+    // --- Error check for allocations ---
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cerr << "[ERROR] cudaMalloc or cudaMemset failed: " << cudaGetErrorString(err) << std::endl;
+        return;
+    }
+
+    // --- Copy input ---
+    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D_double), cudaMemcpyHostToDevice);
+
+    // --- Copy threshold to constant memory ---
+    cudaMemcpyToSymbol(d_threshold_double, &threshold, sizeof(double));
+
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cerr << "[ERROR] cudaMemcpy or cudaMemcpyToSymbol failed: " << cudaGetErrorString(err) << std::endl;
+        return;
+    }
+
+    // --- Kernel launch configuration ---
+    int gridSize = (N + blockSize - 1) / blockSize;
+    compact_points_bitmask_double<<<gridSize, blockSize>>>(d_input, d_output, d_count, N);
+
+    // --- Check kernel launch ---
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cerr << "[ERROR] Kernel launch failed: " << cudaGetErrorString(err) << std::endl;
+        return;
+    }
+
+    // --- Wait for kernel to complete ---
+    cudaDeviceSynchronize();
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cerr << "[ERROR] Kernel execution failed: " << cudaGetErrorString(err) << std::endl;
+        return;
+    }
+
+    // --- Copy results back ---
+    int h_count = 0;
+    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+
+    if (h_count > N) {
+        std::cerr << "[ERROR] Invalid output count: h_count = " << h_count << " > N = " << N << std::endl;
+        return;
+    }
+
+    output.resize(h_count);
+    cudaMemcpy(output.data(), d_output, h_count * sizeof(Point2D_double), cudaMemcpyDeviceToHost);
+
+    // --- Final error check for memcpy ---
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cerr << "[ERROR] cudaMemcpy output failed: " << cudaGetErrorString(err) << std::endl;
+        return;
+    }
+
+    // --- Stop timing ---
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time_ms, start, stop);
+
+    // --- Clean up ---
+    cudaFree(d_input);
+    cudaFree(d_output);
+    cudaFree(d_count);
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 }

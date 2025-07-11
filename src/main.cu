@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
         std::cout << "\n🚀 Sorting with Thrust (GPU backend)...\n";
         sort_by_morton_thrust(points, true);
     }
-
+ 
     // Step 5: Print sorted points
     printPointList(points, "🌀 Points After Morton Sorting", maxPrint);
 

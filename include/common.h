@@ -18,6 +18,7 @@
 __host__ __device__
 unsigned int morton2D_encode(unsigned int x, unsigned int y);
 
+
 /**
  * @brief Structure representing a point in a 2D field.
  *
@@ -29,6 +30,19 @@ struct Point2D {
     float vx, vy; ///< Velocity in X,y direction
     float temp; ///< Temperature at the point
 };
+
+/**
+ * @brief Structure representing a point in a 2D field (double precision).
+ *
+ * This structure stores spatial coordinates (x, y),
+ * wind velocity components (vx, vy), and temperature — all in double precision.
+ */
+struct Point2D_double {
+    double x, y;   ///< x,y-coordinate
+    double vx, vy; ///< Velocity in X,y direction
+    double temp;   ///< Temperature at the point
+};
+
 
 /**
  * @brief Structure combining a Morton code with a 2D point.
@@ -52,6 +66,22 @@ struct isHotPredicate {
 
     __host__ __device__
     bool operator()(const Point2D& p) const {
+        return p.temp > threshold;
+    }
+};
+
+// For double
+__host__ __device__ inline
+bool isHotPoint(const Point2D_double& p, double threshold) {
+    return p.temp > threshold;
+}
+
+// For double
+struct isHotPredicate_double {
+    double threshold;
+
+    __host__ __device__
+    bool operator()(const Point2D_double& p) const {
         return p.temp > threshold;
     }
 };

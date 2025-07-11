@@ -4,6 +4,8 @@
 
 /// Device-side predicate used in GPU kernels
 __device__ inline bool isHotPredicateDevice(const Point2D& p);
+__device__ inline bool isHotPredicateDevice(const Point2D_double& p);
+
 
 /// Naive GPU kernel using global atomic counter
 __global__ void streamCompactNaive(const Point2D* in, Point2D* out, int N, int* d_counter);
@@ -58,3 +60,25 @@ void testWarpGPUCompaction(const std::vector<Point2D>& input, float threshold, s
 void testBitmaskGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output);
 
 void testBitmaskSurfaceGPUCompaction(const std::vector<Point2D>& input, float threshold, int surface_width);
+
+
+
+void bitmask_stream_compaction_gpu_float(const std::vector<Point2D>& input,
+                                         float threshold,
+                                         int blockSize,
+                                         float& time_ms,
+                                         std::vector<Point2D>& output);
+void bitmask_stream_compaction_gpu_double(const std::vector<Point2D_double>& input,
+                                          double threshold,
+                                          int blockSize,
+                                          float& time_ms,
+                                          std::vector<Point2D_double>& output);
+__global__ void compact_points_bitmask_double(
+    const Point2D_double* d_input,
+    Point2D_double* d_output,
+    int* d_count,
+    int num_points
+);
+
+//__device__ bool isHotPredicateDevice(Point2D_double pt);
+
