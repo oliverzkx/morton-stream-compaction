@@ -1,0 +1,1445 @@
++ set -euo pipefail
++ N=1048576
++ K=8
++ BIN=./build/main
++ OUT=locality_data.csv
++ echo mode,variant,k,N,kernel_ms,total_ms,out_pts
++ run naive atomic
++ MODE=naive
++ VAR=atomic
++ echo '➜ running: naive / atomic'
+➜ running: naive / atomic
+++ ./build/main --mode naive --variant atomic -k 8 -n 1048576
++ RAW='✅ Morton stream-compaction demo
+🧭 Settings → N=1048576, seed=fixed, mode=naive, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+🌐 🔵 Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (4.00, 0.00)  V=(-2.29, 1.53)  Temp=11.96
+  (5.00, 0.00)  V=(-0.45, -0.26)  Temp=20.55
+  (6.00, 0.00)  V=(2.37, -0.65)  Temp=21.07
+  (7.00, 0.00)  V=(-0.77, 4.69)  Temp=14.73
+  (8.00, 0.00)  V=(-0.82, 2.32)  Temp=31.71
+  (9.00, 0.00)  V=(-4.08, 1.48)  Temp=26.99
+  ... [Showing first 10 of total 1048576 points]
+
+🌐 🌀 Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (0.00, 1.00)  V=(4.58, 3.83)  Temp=29.52
+  (1.00, 1.00)  V=(1.41, -2.50)  Temp=12.92
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (2.00, 1.00)  V=(4.14, -2.22)  Temp=32.68
+  (3.00, 1.00)  V=(-2.54, 1.72)  Temp=39.16
+  (0.00, 2.00)  V=(-3.84, 1.46)  Temp=16.85
+  (1.00, 2.00)  V=(0.12, 0.04)  Temp=26.31
+  ... [Showing first 10 of total 1048576 points]
+
+👉 CPU manual  : 349120 pts
+👉 Thrust CPU  : 349120 pts
+👉 Thrust GPU  : 349120 pts
+
+[GPU] Testing Naive Stream Compaction...
+⏱️ Naive GPU total time (including memory ops): 9.37 ms
+📌 Compacted count: 349120
+👉 Naive GPU   : 349120 pts
+🌐 ✅ Bin GPU Compacted (349120 points):
+  (99.00, 104.00)  V=(-4.22, -4.41)  Temp=31.52
+  (98.00, 105.00)  V=(-4.28, 3.83)  Temp=38.83
+  (99.00, 106.00)  V=(-0.97, -1.85)  Temp=38.93
+  (100.00, 104.00)  V=(-4.84, 3.42)  Temp=34.04
+  (101.00, 105.00)  V=(1.64, -0.36)  Temp=35.32
+  (100.00, 106.00)  V=(-3.57, 1.32)  Temp=34.29
+  (101.00, 107.00)  V=(1.51, 3.25)  Temp=32.09
+  (0.00, 120.00)  V=(2.20, 3.12)  Temp=35.20
+  (0.00, 122.00)  V=(-4.33, -0.04)  Temp=32.81
+  (1.00, 123.00)  V=(-3.12, 3.15)  Temp=35.29
+  ... [Showing first 10 of total 349120 points]'
+++ echo '✅ Morton stream-compaction demo
+🧭 Settings → N=1048576, seed=fixed, mode=naive, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+🌐 🔵 Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (4.00, 0.00)  V=(-2.29, 1.53)  Temp=11.96
+  (5.00, 0.00)  V=(-0.45, -0.26)  Temp=20.55
+  (6.00, 0.00)  V=(2.37, -0.65)  Temp=21.07
+  (7.00, 0.00)  V=(-0.77, 4.69)  Temp=14.73
+  (8.00, 0.00)  V=(-0.82, 2.32)  Temp=31.71
+  (9.00, 0.00)  V=(-4.08, 1.48)  Temp=26.99
+  ... [Showing first 10 of total 1048576 points]
+
+🌐 🌀 Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (0.00, 1.00)  V=(4.58, 3.83)  Temp=29.52
+  (1.00, 1.00)  V=(1.41, -2.50)  Temp=12.92
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (2.00, 1.00)  V=(4.14, -2.22)  Temp=32.68
+  (3.00, 1.00)  V=(-2.54, 1.72)  Temp=39.16
+  (0.00, 2.00)  V=(-3.84, 1.46)  Temp=16.85
+  (1.00, 2.00)  V=(0.12, 0.04)  Temp=26.31
+  ... [Showing first 10 of total 1048576 points]
+
+👉 CPU manual  : 349120 pts
+👉 Thrust CPU  : 349120 pts
+👉 Thrust GPU  : 349120 pts
+
+[GPU] Testing Naive Stream Compaction...
+⏱️ Naive GPU total time (including memory ops): 9.37 ms
+📌 Compacted count: 349120
+👉 Naive GPU   : 349120 pts
+🌐 ✅ Bin GPU Compacted (349120 points):
+  (99.00, 104.00)  V=(-4.22, -4.41)  Temp=31.52
+  (98.00, 105.00)  V=(-4.28, 3.83)  Temp=38.83
+  (99.00, 106.00)  V=(-0.97, -1.85)  Temp=38.93
+  (100.00, 104.00)  V=(-4.84, 3.42)  Temp=34.04
+  (101.00, 105.00)  V=(1.64, -0.36)  Temp=35.32
+  (100.00, 106.00)  V=(-3.57, 1.32)  Temp=34.29
+  (101.00, 107.00)  V=(1.51, 3.25)  Temp=32.09
+  (0.00, 120.00)  V=(2.20, 3.12)  Temp=35.20
+  (0.00, 122.00)  V=(-4.33, -0.04)  Temp=32.81
+  (1.00, 123.00)  V=(-3.12, 3.15)  Temp=35.29
+  ... [Showing first 10 of total 349120 points]'
+++ clean
+++ sed -r 's/\x1B\[[0-9;]*[mK]//g'
+++ tr -cd '\11\12\15\40-\176'
++ TXT=' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=naive, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (4.00, 0.00)  V=(-2.29, 1.53)  Temp=11.96
+  (5.00, 0.00)  V=(-0.45, -0.26)  Temp=20.55
+  (6.00, 0.00)  V=(2.37, -0.65)  Temp=21.07
+  (7.00, 0.00)  V=(-0.77, 4.69)  Temp=14.73
+  (8.00, 0.00)  V=(-0.82, 2.32)  Temp=31.71
+  (9.00, 0.00)  V=(-4.08, 1.48)  Temp=26.99
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (0.00, 1.00)  V=(4.58, 3.83)  Temp=29.52
+  (1.00, 1.00)  V=(1.41, -2.50)  Temp=12.92
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (2.00, 1.00)  V=(4.14, -2.22)  Temp=32.68
+  (3.00, 1.00)  V=(-2.54, 1.72)  Temp=39.16
+  (0.00, 2.00)  V=(-3.84, 1.46)  Temp=16.85
+  (1.00, 2.00)  V=(0.12, 0.04)  Temp=26.31
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 349120 pts
+ Thrust CPU  : 349120 pts
+ Thrust GPU  : 349120 pts
+
+[GPU] Testing Naive Stream Compaction...
+ Naive GPU total time (including memory ops): 9.37 ms
+ Compacted count: 349120
+ Naive GPU   : 349120 pts
+  Bin GPU Compacted (349120 points):
+  (99.00, 104.00)  V=(-4.22, -4.41)  Temp=31.52
+  (98.00, 105.00)  V=(-4.28, 3.83)  Temp=38.83
+  (99.00, 106.00)  V=(-0.97, -1.85)  Temp=38.93
+  (100.00, 104.00)  V=(-4.84, 3.42)  Temp=34.04
+  (101.00, 105.00)  V=(1.64, -0.36)  Temp=35.32
+  (100.00, 106.00)  V=(-3.57, 1.32)  Temp=34.29
+  (101.00, 107.00)  V=(1.51, 3.25)  Temp=32.09
+  (0.00, 120.00)  V=(2.20, 3.12)  Temp=35.20
+  (0.00, 122.00)  V=(-4.33, -0.04)  Temp=32.81
+  (1.00, 123.00)  V=(-3.12, 3.15)  Temp=35.29
+  ... [Showing first 10 of total 349120 points]'
++ [[ naive == \n\a\i\v\e ]]
+++ extract 'Compacted count: *([0-9]+)' ' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=naive, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (4.00, 0.00)  V=(-2.29, 1.53)  Temp=11.96
+  (5.00, 0.00)  V=(-0.45, -0.26)  Temp=20.55
+  (6.00, 0.00)  V=(2.37, -0.65)  Temp=21.07
+  (7.00, 0.00)  V=(-0.77, 4.69)  Temp=14.73
+  (8.00, 0.00)  V=(-0.82, 2.32)  Temp=31.71
+  (9.00, 0.00)  V=(-4.08, 1.48)  Temp=26.99
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (0.00, 1.00)  V=(4.58, 3.83)  Temp=29.52
+  (1.00, 1.00)  V=(1.41, -2.50)  Temp=12.92
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (2.00, 1.00)  V=(4.14, -2.22)  Temp=32.68
+  (3.00, 1.00)  V=(-2.54, 1.72)  Temp=39.16
+  (0.00, 2.00)  V=(-3.84, 1.46)  Temp=16.85
+  (1.00, 2.00)  V=(0.12, 0.04)  Temp=26.31
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 349120 pts
+ Thrust CPU  : 349120 pts
+ Thrust GPU  : 349120 pts
+
+[GPU] Testing Naive Stream Compaction...
+ Naive GPU total time (including memory ops): 9.37 ms
+ Compacted count: 349120
+ Naive GPU   : 349120 pts
+  Bin GPU Compacted (349120 points):
+  (99.00, 104.00)  V=(-4.22, -4.41)  Temp=31.52
+  (98.00, 105.00)  V=(-4.28, 3.83)  Temp=38.83
+  (99.00, 106.00)  V=(-0.97, -1.85)  Temp=38.93
+  (100.00, 104.00)  V=(-4.84, 3.42)  Temp=34.04
+  (101.00, 105.00)  V=(1.64, -0.36)  Temp=35.32
+  (100.00, 106.00)  V=(-3.57, 1.32)  Temp=34.29
+  (101.00, 107.00)  V=(1.51, 3.25)  Temp=32.09
+  (0.00, 120.00)  V=(2.20, 3.12)  Temp=35.20
+  (0.00, 122.00)  V=(-4.33, -0.04)  Temp=32.81
+  (1.00, 123.00)  V=(-3.12, 3.15)  Temp=35.29
+  ... [Showing first 10 of total 349120 points]'
+++ echo ' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=naive, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (4.00, 0.00)  V=(-2.29, 1.53)  Temp=11.96
+  (5.00, 0.00)  V=(-0.45, -0.26)  Temp=20.55
+  (6.00, 0.00)  V=(2.37, -0.65)  Temp=21.07
+  (7.00, 0.00)  V=(-0.77, 4.69)  Temp=14.73
+  (8.00, 0.00)  V=(-0.82, 2.32)  Temp=31.71
+  (9.00, 0.00)  V=(-4.08, 1.48)  Temp=26.99
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (0.00, 1.00)  V=(4.58, 3.83)  Temp=29.52
+  (1.00, 1.00)  V=(1.41, -2.50)  Temp=12.92
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (2.00, 1.00)  V=(4.14, -2.22)  Temp=32.68
+  (3.00, 1.00)  V=(-2.54, 1.72)  Temp=39.16
+  (0.00, 2.00)  V=(-3.84, 1.46)  Temp=16.85
+  (1.00, 2.00)  V=(0.12, 0.04)  Temp=26.31
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 349120 pts
+ Thrust CPU  : 349120 pts
+ Thrust GPU  : 349120 pts
+
+[GPU] Testing Naive Stream Compaction...
+ Naive GPU total time (including memory ops): 9.37 ms
+ Compacted count: 349120
+ Naive GPU   : 349120 pts
+  Bin GPU Compacted (349120 points):
+  (99.00, 104.00)  V=(-4.22, -4.41)  Temp=31.52
+  (98.00, 105.00)  V=(-4.28, 3.83)  Temp=38.83
+  (99.00, 106.00)  V=(-0.97, -1.85)  Temp=38.93
+  (100.00, 104.00)  V=(-4.84, 3.42)  Temp=34.04
+  (101.00, 105.00)  V=(1.64, -0.36)  Temp=35.32
+  (100.00, 106.00)  V=(-3.57, 1.32)  Temp=34.29
+  (101.00, 107.00)  V=(1.51, 3.25)  Temp=32.09
+  (0.00, 120.00)  V=(2.20, 3.12)  Temp=35.20
+  (0.00, 122.00)  V=(-4.33, -0.04)  Temp=32.81
+  (1.00, 123.00)  V=(-3.12, 3.15)  Temp=35.29
+  ... [Showing first 10 of total 349120 points]'
+++ sed -n -r 's/Compacted count: *([0-9]+)/\1/p'
+++ head -1
++ PTS=' 349120'
+++ extract 'Naive GPU total time .* ([0-9.]+) ms' ' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=naive, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (4.00, 0.00)  V=(-2.29, 1.53)  Temp=11.96
+  (5.00, 0.00)  V=(-0.45, -0.26)  Temp=20.55
+  (6.00, 0.00)  V=(2.37, -0.65)  Temp=21.07
+  (7.00, 0.00)  V=(-0.77, 4.69)  Temp=14.73
+  (8.00, 0.00)  V=(-0.82, 2.32)  Temp=31.71
+  (9.00, 0.00)  V=(-4.08, 1.48)  Temp=26.99
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (0.00, 1.00)  V=(4.58, 3.83)  Temp=29.52
+  (1.00, 1.00)  V=(1.41, -2.50)  Temp=12.92
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (2.00, 1.00)  V=(4.14, -2.22)  Temp=32.68
+  (3.00, 1.00)  V=(-2.54, 1.72)  Temp=39.16
+  (0.00, 2.00)  V=(-3.84, 1.46)  Temp=16.85
+  (1.00, 2.00)  V=(0.12, 0.04)  Temp=26.31
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 349120 pts
+ Thrust CPU  : 349120 pts
+ Thrust GPU  : 349120 pts
+
+[GPU] Testing Naive Stream Compaction...
+ Naive GPU total time (including memory ops): 9.37 ms
+ Compacted count: 349120
+ Naive GPU   : 349120 pts
+  Bin GPU Compacted (349120 points):
+  (99.00, 104.00)  V=(-4.22, -4.41)  Temp=31.52
+  (98.00, 105.00)  V=(-4.28, 3.83)  Temp=38.83
+  (99.00, 106.00)  V=(-0.97, -1.85)  Temp=38.93
+  (100.00, 104.00)  V=(-4.84, 3.42)  Temp=34.04
+  (101.00, 105.00)  V=(1.64, -0.36)  Temp=35.32
+  (100.00, 106.00)  V=(-3.57, 1.32)  Temp=34.29
+  (101.00, 107.00)  V=(1.51, 3.25)  Temp=32.09
+  (0.00, 120.00)  V=(2.20, 3.12)  Temp=35.20
+  (0.00, 122.00)  V=(-4.33, -0.04)  Temp=32.81
+  (1.00, 123.00)  V=(-3.12, 3.15)  Temp=35.29
+  ... [Showing first 10 of total 349120 points]'
+++ echo ' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=naive, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (4.00, 0.00)  V=(-2.29, 1.53)  Temp=11.96
+  (5.00, 0.00)  V=(-0.45, -0.26)  Temp=20.55
+  (6.00, 0.00)  V=(2.37, -0.65)  Temp=21.07
+  (7.00, 0.00)  V=(-0.77, 4.69)  Temp=14.73
+  (8.00, 0.00)  V=(-0.82, 2.32)  Temp=31.71
+  (9.00, 0.00)  V=(-4.08, 1.48)  Temp=26.99
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, -1.17)  Temp=33.62
+  (1.00, 0.00)  V=(1.28, -2.09)  Temp=20.24
+  (0.00, 1.00)  V=(4.58, 3.83)  Temp=29.52
+  (1.00, 1.00)  V=(1.41, -2.50)  Temp=12.92
+  (2.00, 0.00)  V=(4.41, -2.06)  Temp=13.39
+  (3.00, 0.00)  V=(3.82, -3.09)  Temp=19.89
+  (2.00, 1.00)  V=(4.14, -2.22)  Temp=32.68
+  (3.00, 1.00)  V=(-2.54, 1.72)  Temp=39.16
+  (0.00, 2.00)  V=(-3.84, 1.46)  Temp=16.85
+  (1.00, 2.00)  V=(0.12, 0.04)  Temp=26.31
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 349120 pts
+ Thrust CPU  : 349120 pts
+ Thrust GPU  : 349120 pts
+
+[GPU] Testing Naive Stream Compaction...
+ Naive GPU total time (including memory ops): 9.37 ms
+ Compacted count: 349120
+ Naive GPU   : 349120 pts
+  Bin GPU Compacted (349120 points):
+  (99.00, 104.00)  V=(-4.22, -4.41)  Temp=31.52
+  (98.00, 105.00)  V=(-4.28, 3.83)  Temp=38.83
+  (99.00, 106.00)  V=(-0.97, -1.85)  Temp=38.93
+  (100.00, 104.00)  V=(-4.84, 3.42)  Temp=34.04
+  (101.00, 105.00)  V=(1.64, -0.36)  Temp=35.32
+  (100.00, 106.00)  V=(-3.57, 1.32)  Temp=34.29
+  (101.00, 107.00)  V=(1.51, 3.25)  Temp=32.09
+  (0.00, 120.00)  V=(2.20, 3.12)  Temp=35.20
+  (0.00, 122.00)  V=(-4.33, -0.04)  Temp=32.81
+  (1.00, 123.00)  V=(-3.12, 3.15)  Temp=35.29
+  ... [Showing first 10 of total 349120 points]'
+++ sed -n -r 's/Naive GPU total time .* ([0-9.]+) ms/\1/p'
+++ head -1
++ TMS=' 9.37'
++ KMS=' 9.37'
++ echo 'naive,atomic,8,1048576, 9.37, 9.37, 349120'
++ run bin atomic
++ MODE=bin
++ VAR=atomic
++ echo '➜ running: bin / atomic'
+➜ running: bin / atomic
+++ ./build/main --mode bin --variant atomic -k 8 -n 1048576
++ RAW='✅ Morton stream-compaction demo
+🧭 Settings → N=1048576, seed=fixed, mode=bin, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+🌐 🔵 Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (4.00, 0.00)  V=(-3.98, 1.88)  Temp=13.57
+  (5.00, 0.00)  V=(4.85, -3.55)  Temp=20.78
+  (6.00, 0.00)  V=(-3.80, 0.02)  Temp=33.60
+  (7.00, 0.00)  V=(-3.90, 0.58)  Temp=12.65
+  (8.00, 0.00)  V=(-2.36, -2.41)  Temp=34.47
+  (9.00, 0.00)  V=(2.46, -4.36)  Temp=18.02
+  ... [Showing first 10 of total 1048576 points]
+
+🌐 🌀 Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (0.00, 1.00)  V=(4.78, -0.65)  Temp=38.91
+  (1.00, 1.00)  V=(-4.52, -4.68)  Temp=27.79
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (2.00, 1.00)  V=(-0.46, 0.73)  Temp=19.34
+  (3.00, 1.00)  V=(-3.90, -4.54)  Temp=19.18
+  (0.00, 2.00)  V=(-2.09, -4.22)  Temp=12.53
+  (1.00, 2.00)  V=(-4.78, -4.61)  Temp=30.67
+  ... [Showing first 10 of total 1048576 points]
+
+👉 CPU manual  : 348677 pts
+👉 Thrust CPU  : 348677 pts
+👉 Thrust GPU  : 348677 pts
+👉 Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms
+🌐 ✅ Bin GPU Compacted (348677 points):
+  (105.00, 119.00)  V=(1.94, -4.64)  Temp=32.69
+  (87.00, 39.00)  V=(-3.84, 0.50)  Temp=36.71
+  (84.00, 34.00)  V=(-1.97, -2.81)  Temp=34.98
+  (24.00, 129.00)  V=(-1.08, -4.22)  Temp=31.07
+  (88.00, 33.00)  V=(-1.28, -3.94)  Temp=39.39
+  (31.00, 129.00)  V=(3.71, -2.73)  Temp=36.65
+  (25.00, 131.00)  V=(3.34, 2.76)  Temp=30.45
+  (19.00, 140.00)  V=(4.78, 0.16)  Temp=33.71
+  (26.00, 129.00)  V=(-1.04, 3.87)  Temp=34.12
+  (85.00, 105.00)  V=(3.35, -4.39)  Temp=39.31
+  ... [Showing first 10 of total 348677 points]'
+++ echo '✅ Morton stream-compaction demo
+🧭 Settings → N=1048576, seed=fixed, mode=bin, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+🌐 🔵 Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (4.00, 0.00)  V=(-3.98, 1.88)  Temp=13.57
+  (5.00, 0.00)  V=(4.85, -3.55)  Temp=20.78
+  (6.00, 0.00)  V=(-3.80, 0.02)  Temp=33.60
+  (7.00, 0.00)  V=(-3.90, 0.58)  Temp=12.65
+  (8.00, 0.00)  V=(-2.36, -2.41)  Temp=34.47
+  (9.00, 0.00)  V=(2.46, -4.36)  Temp=18.02
+  ... [Showing first 10 of total 1048576 points]
+
+🌐 🌀 Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (0.00, 1.00)  V=(4.78, -0.65)  Temp=38.91
+  (1.00, 1.00)  V=(-4.52, -4.68)  Temp=27.79
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (2.00, 1.00)  V=(-0.46, 0.73)  Temp=19.34
+  (3.00, 1.00)  V=(-3.90, -4.54)  Temp=19.18
+  (0.00, 2.00)  V=(-2.09, -4.22)  Temp=12.53
+  (1.00, 2.00)  V=(-4.78, -4.61)  Temp=30.67
+  ... [Showing first 10 of total 1048576 points]
+
+👉 CPU manual  : 348677 pts
+👉 Thrust CPU  : 348677 pts
+👉 Thrust GPU  : 348677 pts
+👉 Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms
+🌐 ✅ Bin GPU Compacted (348677 points):
+  (105.00, 119.00)  V=(1.94, -4.64)  Temp=32.69
+  (87.00, 39.00)  V=(-3.84, 0.50)  Temp=36.71
+  (84.00, 34.00)  V=(-1.97, -2.81)  Temp=34.98
+  (24.00, 129.00)  V=(-1.08, -4.22)  Temp=31.07
+  (88.00, 33.00)  V=(-1.28, -3.94)  Temp=39.39
+  (31.00, 129.00)  V=(3.71, -2.73)  Temp=36.65
+  (25.00, 131.00)  V=(3.34, 2.76)  Temp=30.45
+  (19.00, 140.00)  V=(4.78, 0.16)  Temp=33.71
+  (26.00, 129.00)  V=(-1.04, 3.87)  Temp=34.12
+  (85.00, 105.00)  V=(3.35, -4.39)  Temp=39.31
+  ... [Showing first 10 of total 348677 points]'
+++ clean
+++ sed -r 's/\x1B\[[0-9;]*[mK]//g'
+++ tr -cd '\11\12\15\40-\176'
++ TXT=' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=bin, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (4.00, 0.00)  V=(-3.98, 1.88)  Temp=13.57
+  (5.00, 0.00)  V=(4.85, -3.55)  Temp=20.78
+  (6.00, 0.00)  V=(-3.80, 0.02)  Temp=33.60
+  (7.00, 0.00)  V=(-3.90, 0.58)  Temp=12.65
+  (8.00, 0.00)  V=(-2.36, -2.41)  Temp=34.47
+  (9.00, 0.00)  V=(2.46, -4.36)  Temp=18.02
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (0.00, 1.00)  V=(4.78, -0.65)  Temp=38.91
+  (1.00, 1.00)  V=(-4.52, -4.68)  Temp=27.79
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (2.00, 1.00)  V=(-0.46, 0.73)  Temp=19.34
+  (3.00, 1.00)  V=(-3.90, -4.54)  Temp=19.18
+  (0.00, 2.00)  V=(-2.09, -4.22)  Temp=12.53
+  (1.00, 2.00)  V=(-4.78, -4.61)  Temp=30.67
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 348677 pts
+ Thrust CPU  : 348677 pts
+ Thrust GPU  : 348677 pts
+ Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms
+  Bin GPU Compacted (348677 points):
+  (105.00, 119.00)  V=(1.94, -4.64)  Temp=32.69
+  (87.00, 39.00)  V=(-3.84, 0.50)  Temp=36.71
+  (84.00, 34.00)  V=(-1.97, -2.81)  Temp=34.98
+  (24.00, 129.00)  V=(-1.08, -4.22)  Temp=31.07
+  (88.00, 33.00)  V=(-1.28, -3.94)  Temp=39.39
+  (31.00, 129.00)  V=(3.71, -2.73)  Temp=36.65
+  (25.00, 131.00)  V=(3.34, 2.76)  Temp=30.45
+  (19.00, 140.00)  V=(4.78, 0.16)  Temp=33.71
+  (26.00, 129.00)  V=(-1.04, 3.87)  Temp=34.12
+  (85.00, 105.00)  V=(3.35, -4.39)  Temp=39.31
+  ... [Showing first 10 of total 348677 points]'
++ [[ bin == \n\a\i\v\e ]]
+++ echo ' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=bin, variant=atomic, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (4.00, 0.00)  V=(-3.98, 1.88)  Temp=13.57
+  (5.00, 0.00)  V=(4.85, -3.55)  Temp=20.78
+  (6.00, 0.00)  V=(-3.80, 0.02)  Temp=33.60
+  (7.00, 0.00)  V=(-3.90, 0.58)  Temp=12.65
+  (8.00, 0.00)  V=(-2.36, -2.41)  Temp=34.47
+  (9.00, 0.00)  V=(2.46, -4.36)  Temp=18.02
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (0.00, 1.00)  V=(4.78, -0.65)  Temp=38.91
+  (1.00, 1.00)  V=(-4.52, -4.68)  Temp=27.79
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (2.00, 1.00)  V=(-0.46, 0.73)  Temp=19.34
+  (3.00, 1.00)  V=(-3.90, -4.54)  Temp=19.18
+  (0.00, 2.00)  V=(-2.09, -4.22)  Temp=12.53
+  (1.00, 2.00)  V=(-4.78, -4.61)  Temp=30.67
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 348677 pts
+ Thrust CPU  : 348677 pts
+ Thrust GPU  : 348677 pts
+ Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms
+  Bin GPU Compacted (348677 points):
+  (105.00, 119.00)  V=(1.94, -4.64)  Temp=32.69
+  (87.00, 39.00)  V=(-3.84, 0.50)  Temp=36.71
+  (84.00, 34.00)  V=(-1.97, -2.81)  Temp=34.98
+  (24.00, 129.00)  V=(-1.08, -4.22)  Temp=31.07
+  (88.00, 33.00)  V=(-1.28, -3.94)  Temp=39.39
+  (31.00, 129.00)  V=(3.71, -2.73)  Temp=36.65
+  (25.00, 131.00)  V=(3.34, 2.76)  Temp=30.45
+  (19.00, 140.00)  V=(4.78, 0.16)  Temp=33.71
+  (26.00, 129.00)  V=(-1.04, 3.87)  Temp=34.12
+  (85.00, 105.00)  V=(3.35, -4.39)  Temp=39.31
+  ... [Showing first 10 of total 348677 points]'
+++ grep -i '\[atomic\]'
+++ head -1
++ LINE=' Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms'
+++ extract ': *([0-9]+) pts' ' Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms'
+++ echo ' Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms'
+++ sed -n -r 's/: *([0-9]+) pts/\1/p'
+++ head -1
++ PTS=' Bin GPU(k=8) [atomic]    348677, kernel 1.22 ms, total 13.88 ms'
+++ extract 'kernel *([0-9.]+) ms' ' Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms'
+++ echo ' Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms'
+++ sed -n -r 's/kernel *([0-9.]+) ms/\1/p'
+++ head -1
++ KMS=' Bin GPU(k=8) [atomic]    : 348677 pts, 1.22, total 13.88 ms'
+++ extract 'total *([0-9.]+) ms' ' Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms'
+++ echo ' Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, total 13.88 ms'
+++ sed -n -r 's/total *([0-9.]+) ms/\1/p'
+++ head -1
++ TMS=' Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, 13.88'
++ echo 'bin,atomic,8,1048576, Bin GPU(k=8) [atomic]    : 348677 pts, 1.22, total 13.88 ms, Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, 13.88, Bin GPU(k=8) [atomic]    348677, kernel 1.22 ms, total 13.88 ms'
++ run bin partition
++ MODE=bin
++ VAR=partition
++ echo '➜ running: bin / partition'
+➜ running: bin / partition
+++ ./build/main --mode bin --variant partition -k 8 -n 1048576
++ RAW='✅ Morton stream-compaction demo
+🧭 Settings → N=1048576, seed=fixed, mode=bin, variant=partition, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+🌐 🔵 Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (4.00, 0.00)  V=(-3.98, 1.88)  Temp=13.57
+  (5.00, 0.00)  V=(4.85, -3.55)  Temp=20.78
+  (6.00, 0.00)  V=(-3.80, 0.02)  Temp=33.60
+  (7.00, 0.00)  V=(-3.90, 0.58)  Temp=12.65
+  (8.00, 0.00)  V=(-2.36, -2.41)  Temp=34.47
+  (9.00, 0.00)  V=(2.46, -4.36)  Temp=18.02
+  ... [Showing first 10 of total 1048576 points]
+
+🌐 🌀 Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (0.00, 1.00)  V=(4.78, -0.65)  Temp=38.91
+  (1.00, 1.00)  V=(-4.52, -4.68)  Temp=27.79
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (2.00, 1.00)  V=(-0.46, 0.73)  Temp=19.34
+  (3.00, 1.00)  V=(-3.90, -4.54)  Temp=19.18
+  (0.00, 2.00)  V=(-2.09, -4.22)  Temp=12.53
+  (1.00, 2.00)  V=(-4.78, -4.61)  Temp=30.67
+  ... [Showing first 10 of total 1048576 points]
+
+👉 CPU manual  : 348677 pts
+👉 Thrust CPU  : 348677 pts
+👉 Thrust GPU  : 348677 pts
+👉 Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms
+🌐 ✅ Bin GPU Compacted (348677 points):
+  (32.00, 32.00)  V=(3.68, -0.83)  Temp=38.01
+  (48.00, 48.00)  V=(-2.47, 0.83)  Temp=30.67
+  (80.00, 80.00)  V=(2.38, 0.28)  Temp=36.00
+  (64.00, 64.00)  V=(-0.65, -2.86)  Temp=32.93
+  (80.00, 32.00)  V=(2.49, 4.63)  Temp=35.72
+  (16.00, 32.00)  V=(4.00, 4.22)  Temp=35.56
+  (64.00, 112.00)  V=(3.41, -0.75)  Temp=36.25
+  (80.00, 112.00)  V=(2.09, 4.96)  Temp=32.92
+  (112.00, 96.00)  V=(-2.96, -0.02)  Temp=39.07
+  (80.00, 48.00)  V=(2.08, 2.18)  Temp=30.25
+  ... [Showing first 10 of total 348677 points]'
+++ echo '✅ Morton stream-compaction demo
+🧭 Settings → N=1048576, seed=fixed, mode=bin, variant=partition, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+🌐 🔵 Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (4.00, 0.00)  V=(-3.98, 1.88)  Temp=13.57
+  (5.00, 0.00)  V=(4.85, -3.55)  Temp=20.78
+  (6.00, 0.00)  V=(-3.80, 0.02)  Temp=33.60
+  (7.00, 0.00)  V=(-3.90, 0.58)  Temp=12.65
+  (8.00, 0.00)  V=(-2.36, -2.41)  Temp=34.47
+  (9.00, 0.00)  V=(2.46, -4.36)  Temp=18.02
+  ... [Showing first 10 of total 1048576 points]
+
+🌐 🌀 Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (0.00, 1.00)  V=(4.78, -0.65)  Temp=38.91
+  (1.00, 1.00)  V=(-4.52, -4.68)  Temp=27.79
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (2.00, 1.00)  V=(-0.46, 0.73)  Temp=19.34
+  (3.00, 1.00)  V=(-3.90, -4.54)  Temp=19.18
+  (0.00, 2.00)  V=(-2.09, -4.22)  Temp=12.53
+  (1.00, 2.00)  V=(-4.78, -4.61)  Temp=30.67
+  ... [Showing first 10 of total 1048576 points]
+
+👉 CPU manual  : 348677 pts
+👉 Thrust CPU  : 348677 pts
+👉 Thrust GPU  : 348677 pts
+👉 Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms
+🌐 ✅ Bin GPU Compacted (348677 points):
+  (32.00, 32.00)  V=(3.68, -0.83)  Temp=38.01
+  (48.00, 48.00)  V=(-2.47, 0.83)  Temp=30.67
+  (80.00, 80.00)  V=(2.38, 0.28)  Temp=36.00
+  (64.00, 64.00)  V=(-0.65, -2.86)  Temp=32.93
+  (80.00, 32.00)  V=(2.49, 4.63)  Temp=35.72
+  (16.00, 32.00)  V=(4.00, 4.22)  Temp=35.56
+  (64.00, 112.00)  V=(3.41, -0.75)  Temp=36.25
+  (80.00, 112.00)  V=(2.09, 4.96)  Temp=32.92
+  (112.00, 96.00)  V=(-2.96, -0.02)  Temp=39.07
+  (80.00, 48.00)  V=(2.08, 2.18)  Temp=30.25
+  ... [Showing first 10 of total 348677 points]'
+++ clean
+++ sed -r 's/\x1B\[[0-9;]*[mK]//g'
+++ tr -cd '\11\12\15\40-\176'
++ TXT=' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=bin, variant=partition, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (4.00, 0.00)  V=(-3.98, 1.88)  Temp=13.57
+  (5.00, 0.00)  V=(4.85, -3.55)  Temp=20.78
+  (6.00, 0.00)  V=(-3.80, 0.02)  Temp=33.60
+  (7.00, 0.00)  V=(-3.90, 0.58)  Temp=12.65
+  (8.00, 0.00)  V=(-2.36, -2.41)  Temp=34.47
+  (9.00, 0.00)  V=(2.46, -4.36)  Temp=18.02
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (0.00, 1.00)  V=(4.78, -0.65)  Temp=38.91
+  (1.00, 1.00)  V=(-4.52, -4.68)  Temp=27.79
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (2.00, 1.00)  V=(-0.46, 0.73)  Temp=19.34
+  (3.00, 1.00)  V=(-3.90, -4.54)  Temp=19.18
+  (0.00, 2.00)  V=(-2.09, -4.22)  Temp=12.53
+  (1.00, 2.00)  V=(-4.78, -4.61)  Temp=30.67
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 348677 pts
+ Thrust CPU  : 348677 pts
+ Thrust GPU  : 348677 pts
+ Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms
+  Bin GPU Compacted (348677 points):
+  (32.00, 32.00)  V=(3.68, -0.83)  Temp=38.01
+  (48.00, 48.00)  V=(-2.47, 0.83)  Temp=30.67
+  (80.00, 80.00)  V=(2.38, 0.28)  Temp=36.00
+  (64.00, 64.00)  V=(-0.65, -2.86)  Temp=32.93
+  (80.00, 32.00)  V=(2.49, 4.63)  Temp=35.72
+  (16.00, 32.00)  V=(4.00, 4.22)  Temp=35.56
+  (64.00, 112.00)  V=(3.41, -0.75)  Temp=36.25
+  (80.00, 112.00)  V=(2.09, 4.96)  Temp=32.92
+  (112.00, 96.00)  V=(-2.96, -0.02)  Temp=39.07
+  (80.00, 48.00)  V=(2.08, 2.18)  Temp=30.25
+  ... [Showing first 10 of total 348677 points]'
++ [[ bin == \n\a\i\v\e ]]
+++ echo ' Morton stream-compaction demo
+ Settings  N=1048576, seed=fixed, mode=bin, variant=partition, k=8, CPU=on, GPU=on
+***************************************************
+Found 1 CUDA-enabled devices
+========================= IDENTITY DATA ==================================
+GPU model name: NVIDIA GeForce RTX 4060 Laptop GPU
+GPU The device is NOT an integrated (motherboard) GPU - i.e. it is a discrete device
+GPU pciBusID: 1
+GPU pciDeviceID: 0
+GPU pciDomainID: 0
+the device is NOT a Tesla one using TCC driver
+========================= COMPUTE DATA ==================================
+GPU Compute capability: 8.9
+GPU Clock frequency in hertzs: 1890000
+GPU Device can concurrently copy memory and execute a kernel: 1
+GPU number of multi-processors: 24
+GPU maximum number of threads per multi-processor: 1536
+GPU Maximum size of each dimension of a grid: 2147483647x65535x65535
+GPU Maximum size of each dimension of a block: 1024x1024x64
+GPU Maximum number of threads per block: 1024
+GPU Maximum pitch in bytes allowed by memory copies: 2147483647
+GPU Compute mode is: 0
+========================= MEMORY DATA ==================================
+GPU total global memory: 8585216000 bytes
+GPU peak memory clock frequency in kilohertz: 8001000 bytes
+GPU memory bus width: 128 bits
+GPU L2 cache size: 33554432 bytes
+GPU 32-bit registers available per block: 65536
+GPU Shared memory available per block in bytes: 49152
+GPU Alignment requirement for textures: 512
+GPU Constant memory available on device in bytes: 65536
+GPU Warp size in threads: 32
+GPU maximum 1D texture size: 131072
+GPU maximum 2D texture size: 131072 x 65536
+GPU maximum 3D texture size: 16384 x 16384 x 16384
+GPU maximum 1D layered texture dimensions: 32768 x 2048
+GPU maximum 2D layered texture dimensions: 32768 x 32768 x 2048
+GPU surface alignment: 512
+GPU The device can map host memory into the CUDA address space
+GPU memory does not have ECC support
+GPU The device DOES NOT share an unified address space with the host
+========================= EXECUTION DATA ==================================
+GPU Concurrent kernels are allowed
+GPU There is a run time limit for kernels executed in the device
+GPU The device can concurrently copy memory between host and device while executing a kernel
+Choosing NVIDIA GeForce RTX 4060 Laptop GPU
+***************************************************
+  Generated Points (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (4.00, 0.00)  V=(-3.98, 1.88)  Temp=13.57
+  (5.00, 0.00)  V=(4.85, -3.55)  Temp=20.78
+  (6.00, 0.00)  V=(-3.80, 0.02)  Temp=33.60
+  (7.00, 0.00)  V=(-3.90, 0.58)  Temp=12.65
+  (8.00, 0.00)  V=(-2.36, -2.41)  Temp=34.47
+  (9.00, 0.00)  V=(2.46, -4.36)  Temp=18.02
+  ... [Showing first 10 of total 1048576 points]
+
+  Points After Morton Sorting (1048576 points):
+  (0.00, 0.00)  V=(0.78, 0.15)  Temp=26.29
+  (1.00, 0.00)  V=(-4.14, 3.24)  Temp=26.81
+  (0.00, 1.00)  V=(4.78, -0.65)  Temp=38.91
+  (1.00, 1.00)  V=(-4.52, -4.68)  Temp=27.79
+  (2.00, 0.00)  V=(4.88, 4.73)  Temp=33.77
+  (3.00, 0.00)  V=(3.17, 0.75)  Temp=35.47
+  (2.00, 1.00)  V=(-0.46, 0.73)  Temp=19.34
+  (3.00, 1.00)  V=(-3.90, -4.54)  Temp=19.18
+  (0.00, 2.00)  V=(-2.09, -4.22)  Temp=12.53
+  (1.00, 2.00)  V=(-4.78, -4.61)  Temp=30.67
+  ... [Showing first 10 of total 1048576 points]
+
+ CPU manual  : 348677 pts
+ Thrust CPU  : 348677 pts
+ Thrust GPU  : 348677 pts
+ Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms
+  Bin GPU Compacted (348677 points):
+  (32.00, 32.00)  V=(3.68, -0.83)  Temp=38.01
+  (48.00, 48.00)  V=(-2.47, 0.83)  Temp=30.67
+  (80.00, 80.00)  V=(2.38, 0.28)  Temp=36.00
+  (64.00, 64.00)  V=(-0.65, -2.86)  Temp=32.93
+  (80.00, 32.00)  V=(2.49, 4.63)  Temp=35.72
+  (16.00, 32.00)  V=(4.00, 4.22)  Temp=35.56
+  (64.00, 112.00)  V=(3.41, -0.75)  Temp=36.25
+  (80.00, 112.00)  V=(2.09, 4.96)  Temp=32.92
+  (112.00, 96.00)  V=(-2.96, -0.02)  Temp=39.07
+  (80.00, 48.00)  V=(2.08, 2.18)  Temp=30.25
+  ... [Showing first 10 of total 348677 points]'
+++ grep -i '\[partition\]'
+++ head -1
++ LINE=' Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms'
+++ extract ': *([0-9]+) pts' ' Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms'
+++ echo ' Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms'
+++ sed -n -r 's/: *([0-9]+) pts/\1/p'
+++ head -1
++ PTS=' Bin GPU(k=8) [partition] 348677, kernel 0.53 ms, total 32.95 ms'
+++ extract 'kernel *([0-9.]+) ms' ' Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms'
+++ echo ' Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms'
+++ sed -n -r 's/kernel *([0-9.]+) ms/\1/p'
+++ head -1
++ KMS=' Bin GPU(k=8) [partition] : 348677 pts, 0.53, total 32.95 ms'
+++ extract 'total *([0-9.]+) ms' ' Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms'
+++ echo ' Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, total 32.95 ms'
+++ sed -n -r 's/total *([0-9.]+) ms/\1/p'
+++ head -1
++ TMS=' Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, 32.95'
++ echo 'bin,partition,8,1048576, Bin GPU(k=8) [partition] : 348677 pts, 0.53, total 32.95 ms, Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, 32.95, Bin GPU(k=8) [partition] 348677, kernel 0.53 ms, total 32.95 ms'

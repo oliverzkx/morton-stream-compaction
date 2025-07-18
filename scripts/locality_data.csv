@@ -1,0 +1,4 @@
+mode,variant,k,N,kernel_ms,total_ms,out_pts
+naive,atomic,8,1048576,9.85,9.85,348791
+bin,atomic,8,1048576,1.21,13.92,348791
+bin,partition,8,1048576,0.51,34.54,349857

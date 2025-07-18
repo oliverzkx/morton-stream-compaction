@@ -1,0 +1,4 @@
+mode,variant,k,N,kernel_ms,total_ms,out_pts
+naive,atomic,8,1048576, 9.37, 9.37, 349120
+bin,atomic,8,1048576, Bin GPU(k=8) [atomic]    : 348677 pts, 1.22, total 13.88 ms, Bin GPU(k=8) [atomic]    : 348677 pts, kernel 1.22 ms, 13.88, Bin GPU(k=8) [atomic]    348677, kernel 1.22 ms, total 13.88 ms
+bin,partition,8,1048576, Bin GPU(k=8) [partition] : 348677 pts, 0.53, total 32.95 ms, Bin GPU(k=8) [partition] : 348677 pts, kernel 0.53 ms, 32.95, Bin GPU(k=8) [partition] 348677, kernel 0.53 ms, total 32.95 ms
