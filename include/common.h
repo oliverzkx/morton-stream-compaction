@@ -1,66 +1,103 @@
 /**
  * @file common.h
- * @brief Common data structures and function declarations for the Morton Stream Compaction project.
+ * @brief Common data types, constants, and helper predicates used
+ *        throughout the Morton-curve stream-compaction project.
+ *
+ * The header defines:
+ *   • Fundamental compile-time constants (e.g. BLOCK_SIZE).  
+ *   • Core point structures in both single- and double-precision.  
+ *   • A Morton-code/point pairing used for locality sorting.  
+ *   • Lightweight host/device helpers and predicates that identify
+ *     “hot” points whose temperature exceeds a user-supplied threshold.
+ *
+ * All entities are simple PODs or inline functions so the header can be
+ * included by both host-only and CUDA device code without side effects.
+ *
  * @author Kaixiang Zou
- * @version 1.0
- * @date 2025-06-23
+ * @version 1.2
+ * @date 2025-07-26
  */
-
-
 #pragma once
-#include <string>
+
 #include <vector>
 #include <string>
 
+/// Default CUDA thread-block size used across kernels
 #define BLOCK_SIZE 256
 
-// Declaration of the Morton encoding function (defined in morton.cu)
+// ────────────────────────────────────────────────────────────────
+// Morton encoding
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * @brief Encode a 2-D integer coordinate (x, y) into a 32-bit Morton code.
+ *
+ * The implementation (in morton.cu) interleaves bits of @p x and @p y
+ * to produce a Z-order index that preserves spatial locality.
+ *
+ * @param x The x-coordinate (least-significant 16 bits are used).
+ * @param y The y-coordinate (least-significant 16 bits are used).
+ * @return 32-bit Morton code.
+ */
 __host__ __device__
 unsigned int morton2D_encode(unsigned int x, unsigned int y);
 
+// ────────────────────────────────────────────────────────────────
+// Point structures
+// ────────────────────────────────────────────────────────────────
 
 /**
- * @brief Structure representing a point in a 2D field.
+ * @brief Single-precision point sample in a 2-D flow field.
  *
- * This structure stores spatial coordinates (x, y),
- * wind velocity components (vx, vy), and temperature.
+ * Contains spatial coordinates, velocity components, and temperature.
  */
 struct Point2D {
-    float x, y; ///< x,y-coordinate
-    float vx, vy; ///< Velocity in X,y direction
-    float temp; ///< Temperature at the point
+    float  x,  y;   ///< Cartesian position
+    float  vx, vy;  ///< Velocity components
+    float  temp;    ///< Temperature value
 };
 
 /**
- * @brief Structure representing a point in a 2D field (double precision).
- *
- * This structure stores spatial coordinates (x, y),
- * wind velocity components (vx, vy), and temperature — all in double precision.
+ * @brief Double-precision variant of Point2D.
  */
 struct Point2D_double {
-    double x, y;   ///< x,y-coordinate
-    double vx, vy; ///< Velocity in X,y direction
-    double temp;   ///< Temperature at the point
+    double x,  y;   ///< Cartesian position
+    double vx, vy;  ///< Velocity components
+    double temp;    ///< Temperature value
 };
-
 
 /**
- * @brief Structure combining a Morton code with a 2D point.
+ * @brief Pairing of a pre-computed Morton code with its corresponding point.
  *
- * Used for spatial locality sorting using Morton (Z-order) codes.
+ * Used by sorting stages to arrange points along a Z-order curve so that
+ * spatially adjacent points end up close in memory.
  */
 struct MortonCodePoint {
-    unsigned int morton; ///< Morton code computed from (x, y)
-    Point2D point; ///< Associated 2D point data
+    unsigned int morton;  ///< Morton code generated from (x, y)
+    Point2D      point;   ///< Associated point sample
 };
 
-/// Check if a point has temperature higher than the given threshold
+// ────────────────────────────────────────────────────────────────
+// “Hot-point” helpers
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * @brief Check whether a point’s temperature exceeds @p threshold.
+ *
+ * @param p         Point sample to test.
+ * @param threshold Temperature threshold.
+ * @return          True if @p p.temp > @p threshold.
+ */
 __host__ __device__ inline
 bool isHotPoint(const Point2D& p, float threshold) {
     return p.temp > threshold;
 }
 
-/// Predicate to check if a point is a hot point (used in thrust::copy_if)
+/**
+ * @brief Functor version of isHotPoint (single-precision).
+ *
+ * Suitable for algorithms such as `thrust::copy_if`.
+ */
 struct isHotPredicate {
     float threshold;
 
@@ -70,13 +107,17 @@ struct isHotPredicate {
     }
 };
 
-// For double
+/**
+ * @brief Double-precision overload of isHotPoint.
+ */
 __host__ __device__ inline
 bool isHotPoint(const Point2D_double& p, double threshold) {
     return p.temp > threshold;
 }
 
-// For double
+/**
+ * @brief Functor version of isHotPoint (double-precision).
+ */
 struct isHotPredicate_double {
     double threshold;
 

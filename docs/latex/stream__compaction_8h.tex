@@ -1,0 +1,255 @@
+\hypertarget{stream__compaction_8h}{}\doxysection{include/stream\+\_\+compaction.h File Reference}
+\label{stream__compaction_8h}\index{include/stream\_compaction.h@{include/stream\_compaction.h}}
+
+
+Naïve, shared-\/memory, warp-\/shuffle, and bitmask variants of stream compaction for a single Morton-\/curve point array.  
+
+
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}common.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}bin\+\_\+kernel.\+h\char`\"{}}\newline
+Include dependency graph for stream\+\_\+compaction.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{stream__compaction_8h__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ bool \mbox{\hyperlink{stream__compaction_8h_a3c2fd2fff42c672acf824702f733ae72}{is\+Hot\+Predicate\+Device}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} \&p)
+\begin{DoxyCompactList}\small\item\em Return {\ttfamily true} if the point’s temperature exceeds \mbox{\hyperlink{stream__compaction_8h_abd0e2827be8f89d2a4f585459a4fcaac}{d\+\_\+threshold}}. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+device\+\_\+\+\_\+ bool \mbox{\hyperlink{stream__compaction_8h_ad81bd2995c5b3f76b201c9136b6bc351}{is\+Hot\+Predicate\+Device}} (const \mbox{\hyperlink{structPoint2D__double}{Point2\+D\+\_\+double}} \&p)
+\begin{DoxyCompactList}\small\item\em Double-\/precision overload of \mbox{\hyperlink{stream__compaction_8h_a3c2fd2fff42c672acf824702f733ae72}{is\+Hot\+Predicate\+Device}}. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction_8h_ac10c3c7e665535841f3b59896d3dfda9}{stream\+Compact\+Naive}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$out, int N, int $\ast$d\+\_\+counter)
+\begin{DoxyCompactList}\small\item\em Naïve compaction kernel; each valid thread atomically appends to {\ttfamily d\+\_\+counter}. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{stream__compaction_8h_a6edc73a69f48655c43feb519b4b8baad}{compact\+Naive\+GPU}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+out, int N, int \&h\+\_\+out\+Count)
+\begin{DoxyCompactList}\small\item\em Host wrapper for \mbox{\hyperlink{stream__compaction_8h_ac10c3c7e665535841f3b59896d3dfda9}{stream\+Compact\+Naive}}. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction_8h_a4597aa57a6a76f3b82a1ead9d188bf19}{stream\+Compact\+Shared}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$out, int N, float threshold, int $\ast$block\+\_\+counts)
+\begin{DoxyCompactList}\small\item\em Shared-\/memory kernel that counts valid points per block, then performs a block-\/level exclusive scan before global write-\/out. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{stream__compaction_8h_ad20d0bef50f8200b2067e24a834dd42a}\label{stream__compaction_8h_ad20d0bef50f8200b2067e24a834dd42a}} 
+void \mbox{\hyperlink{stream__compaction_8h_ad20d0bef50f8200b2067e24a834dd42a}{compact\+Shared\+GPU}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+out, int N, float threshold, int \&h\+\_\+out\+Count)
+\begin{DoxyCompactList}\small\item\em Host wrapper for \mbox{\hyperlink{stream__compaction_8h_a4597aa57a6a76f3b82a1ead9d188bf19}{stream\+Compact\+Shared}}. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction_8h_a1f78ad535714e18c3658ba4c19c58b3e}{compact\+Points\+Warp\+Shuffle}} (\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+input, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+output, int $\ast$d\+\_\+count, int num\+\_\+points)
+\begin{DoxyCompactList}\small\item\em Warp-\/level compaction using shuffle and ballot intrinsics. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{stream__compaction_8h_a12c95c59b24ef884805e33be11b6bf58}\label{stream__compaction_8h_a12c95c59b24ef884805e33be11b6bf58}} 
+void \mbox{\hyperlink{stream__compaction_8h_a12c95c59b24ef884805e33be11b6bf58}{compact\+\_\+points\+\_\+warp}} (\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+input, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+output, int $\ast$d\+\_\+count, int num\+\_\+points)
+\begin{DoxyCompactList}\small\item\em Host wrapper for \mbox{\hyperlink{stream__compaction_8h_a1f78ad535714e18c3658ba4c19c58b3e}{compact\+Points\+Warp\+Shuffle}}. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{stream__compaction_8h_a5eb4563a4b01a5990d6f8dcf3725c334}\label{stream__compaction_8h_a5eb4563a4b01a5990d6f8dcf3725c334}} 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction_8h_a5eb4563a4b01a5990d6f8dcf3725c334}{compact\+Points\+Bitmask}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+input, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+output, int $\ast$d\+\_\+count, int num\+\_\+points)
+\begin{DoxyCompactList}\small\item\em Bitmask kernel that uses {\ttfamily \+\_\+\+\_\+ballot\+\_\+sync} \& {\ttfamily \+\_\+\+\_\+popc}. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction_8h_a1e828cd057ce45c2040c647da1e56052}{compact\+Points\+Bitmask\+Surface}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+input, cuda\+Surface\+Object\+\_\+t surface\+Output, int $\ast$d\+\_\+count, int num\+\_\+points, int surface\+\_\+width)
+\begin{DoxyCompactList}\small\item\em Surface-\/memory variant that writes output via a 2-\/D CUDA surface. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{stream__compaction_8h_ac935ae2c8532ca4de6fe8709c91c170f}\label{stream__compaction_8h_ac935ae2c8532ca4de6fe8709c91c170f}} 
+void \mbox{\hyperlink{stream__compaction_8h_ac935ae2c8532ca4de6fe8709c91c170f}{compact\+\_\+points\+\_\+bitmask}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+input, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+output, int $\ast$d\+\_\+count, int num\+\_\+points)
+\begin{DoxyCompactList}\small\item\em Host wrapper for \mbox{\hyperlink{stream__compaction_8h_a5eb4563a4b01a5990d6f8dcf3725c334}{compact\+Points\+Bitmask}}. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{stream__compaction_8h_aae9c765eec719bf4873b70cb8c7a0987}\label{stream__compaction_8h_aae9c765eec719bf4873b70cb8c7a0987}} 
+void \mbox{\hyperlink{stream__compaction_8h_aae9c765eec719bf4873b70cb8c7a0987}{compact\+\_\+points\+\_\+bitmask\+\_\+surface}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+input, cuda\+Surface\+Object\+\_\+t surface\+Output, int $\ast$d\+\_\+count, int num\+\_\+points, int surface\+\_\+width)
+\begin{DoxyCompactList}\small\item\em Host wrapper for \mbox{\hyperlink{stream__compaction_8h_a1e828cd057ce45c2040c647da1e56052}{compact\+Points\+Bitmask\+Surface}}. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{stream__compaction_8h_ae3bcf39f4e91749120d718df14b1c9c9}\label{stream__compaction_8h_ae3bcf39f4e91749120d718df14b1c9c9}} 
+void {\bfseries test\+Naive\+GPUCompaction} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&output)
+\item 
+\mbox{\Hypertarget{stream__compaction_8h_ad6b4a6272956a4aec4491d41d4397d51}\label{stream__compaction_8h_ad6b4a6272956a4aec4491d41d4397d51}} 
+void {\bfseries test\+Shared\+GPUCompaction} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&output)
+\item 
+\mbox{\Hypertarget{stream__compaction_8h_a4226d386a18acf544f79793cc94cd11e}\label{stream__compaction_8h_a4226d386a18acf544f79793cc94cd11e}} 
+void {\bfseries test\+Warp\+GPUCompaction} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&output)
+\item 
+\mbox{\Hypertarget{stream__compaction_8h_a4b160d66a96291852f2b2f0f722778f7}\label{stream__compaction_8h_a4b160d66a96291852f2b2f0f722778f7}} 
+void {\bfseries test\+Bitmask\+GPUCompaction} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&output)
+\item 
+\mbox{\Hypertarget{stream__compaction_8h_a95e5b99424b9fcf0a4cdd1b2e7ee56b1}\label{stream__compaction_8h_a95e5b99424b9fcf0a4cdd1b2e7ee56b1}} 
+void {\bfseries test\+Bitmask\+Surface\+GPUCompaction} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, int surface\+\_\+width)
+\item 
+void \mbox{\hyperlink{stream__compaction_8h_a5120847e63e46fe717b38607e9e16c52}{bitmask\+\_\+stream\+\_\+compaction\+\_\+gpu\+\_\+float}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, int block\+Size, float \&time\+\_\+ms, std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&output)
+\begin{DoxyCompactList}\small\item\em Complete float-\/precision bitmask pipeline; returns elapsed time. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{stream__compaction_8h_a259cf139e0a300eb2dd135be39fccd6e}\label{stream__compaction_8h_a259cf139e0a300eb2dd135be39fccd6e}} 
+void \mbox{\hyperlink{stream__compaction_8h_a259cf139e0a300eb2dd135be39fccd6e}{bitmask\+\_\+stream\+\_\+compaction\+\_\+gpu\+\_\+double}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D__double}{Point2\+D\+\_\+double}} $>$ \&input, double threshold, int block\+Size, float \&time\+\_\+ms, std\+::vector$<$ \mbox{\hyperlink{structPoint2D__double}{Point2\+D\+\_\+double}} $>$ \&output)
+\begin{DoxyCompactList}\small\item\em Complete double-\/precision bitmask pipeline; returns elapsed time. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{stream__compaction_8h_ad29e78bc0be6b93c4d2dbb535daccff1}\label{stream__compaction_8h_ad29e78bc0be6b93c4d2dbb535daccff1}} 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction_8h_ad29e78bc0be6b93c4d2dbb535daccff1}{compact\+\_\+points\+\_\+bitmask\+\_\+double}} (const \mbox{\hyperlink{structPoint2D__double}{Point2\+D\+\_\+double}} $\ast$d\+\_\+input, \mbox{\hyperlink{structPoint2D__double}{Point2\+D\+\_\+double}} $\ast$d\+\_\+output, int $\ast$d\+\_\+count, int num\+\_\+points)
+\begin{DoxyCompactList}\small\item\em Double-\/precision bitmask kernel. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{stream__compaction_8h_abd0e2827be8f89d2a4f585459a4fcaac}\label{stream__compaction_8h_abd0e2827be8f89d2a4f585459a4fcaac}} 
+float \mbox{\hyperlink{stream__compaction_8h_abd0e2827be8f89d2a4f585459a4fcaac}{d\+\_\+threshold}}
+\begin{DoxyCompactList}\small\item\em Device-\/resident threshold used by all is\+Hot predicates. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Naïve, shared-\/memory, warp-\/shuffle, and bitmask variants of stream compaction for a single Morton-\/curve point array. 
+
+This header groups together\+: • A device-\/side predicate for “hot” points (single \& double precision). ~\newline
+ • Four GPU kernel families (naïve / shared / warp / bitmask). ~\newline
+ • Host-\/side wrappers that launch those kernels and return counts. ~\newline
+ • Stand-\/alone test helpers that measure correctness and timing. ~\newline
+ • Float and double specialisations of the bitmask pipeline. ~\newline
+
+
+Kernels are implemented in the accompanying {\ttfamily .cu} files. ~\newline
+ Host wrappers allocate device buffers, launch kernels, and copy results back for verification / benchmarking.
+
+Author\+: Kaixiang Zou ~\newline
+ Version\+: 1.\+2 ~\newline
+ Date\+: 2025-\/07-\/26 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{stream__compaction_8h_a5120847e63e46fe717b38607e9e16c52}\label{stream__compaction_8h_a5120847e63e46fe717b38607e9e16c52}} 
+\index{stream\_compaction.h@{stream\_compaction.h}!bitmask\_stream\_compaction\_gpu\_float@{bitmask\_stream\_compaction\_gpu\_float}}
+\index{bitmask\_stream\_compaction\_gpu\_float@{bitmask\_stream\_compaction\_gpu\_float}!stream\_compaction.h@{stream\_compaction.h}}
+\doxysubsubsection{\texorpdfstring{bitmask\_stream\_compaction\_gpu\_float()}{bitmask\_stream\_compaction\_gpu\_float()}}
+{\footnotesize\ttfamily void bitmask\+\_\+stream\+\_\+compaction\+\_\+gpu\+\_\+float (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{input,  }\item[{float}]{threshold,  }\item[{int}]{block\+Size,  }\item[{float \&}]{time\+\_\+ms,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{output }\end{DoxyParamCaption})}
+
+
+
+Complete float-\/precision bitmask pipeline; returns elapsed time. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & Host-\/side input points. \\
+\hline
+{\em threshold} & Predicate threshold. \\
+\hline
+{\em block\+Size} & CUDA thread-\/block size. \\
+\hline
+{\em time\+\_\+ms} & Returns GPU time (ms). \\
+\hline
+{\em output} & Host-\/side vector receiving compacted points. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction_8h_a6edc73a69f48655c43feb519b4b8baad}\label{stream__compaction_8h_a6edc73a69f48655c43feb519b4b8baad}} 
+\index{stream\_compaction.h@{stream\_compaction.h}!compactNaiveGPU@{compactNaiveGPU}}
+\index{compactNaiveGPU@{compactNaiveGPU}!stream\_compaction.h@{stream\_compaction.h}}
+\doxysubsubsection{\texorpdfstring{compactNaiveGPU()}{compactNaiveGPU()}}
+{\footnotesize\ttfamily void compact\+Naive\+GPU (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+in,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+out,  }\item[{int}]{N,  }\item[{int \&}]{h\+\_\+out\+Count }\end{DoxyParamCaption})}
+
+
+
+Host wrapper for \mbox{\hyperlink{stream__compaction_8h_ac10c3c7e665535841f3b59896d3dfda9}{stream\+Compact\+Naive}}. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em d\+\_\+in} & Device pointer to input points. \\
+\hline
+{\em d\+\_\+out} & Device pointer to output buffer. \\
+\hline
+{\em N} & Number of input elements. \\
+\hline
+{\em h\+\_\+out\+Count} & Returns number of valid points (host-\/side). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction_8h_a1e828cd057ce45c2040c647da1e56052}\label{stream__compaction_8h_a1e828cd057ce45c2040c647da1e56052}} 
+\index{stream\_compaction.h@{stream\_compaction.h}!compactPointsBitmaskSurface@{compactPointsBitmaskSurface}}
+\index{compactPointsBitmaskSurface@{compactPointsBitmaskSurface}!stream\_compaction.h@{stream\_compaction.h}}
+\doxysubsubsection{\texorpdfstring{compactPointsBitmaskSurface()}{compactPointsBitmaskSurface()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void compact\+Points\+Bitmask\+Surface (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+input,  }\item[{cuda\+Surface\+Object\+\_\+t}]{surface\+Output,  }\item[{int $\ast$}]{d\+\_\+count,  }\item[{int}]{num\+\_\+points,  }\item[{int}]{surface\+\_\+width }\end{DoxyParamCaption})}
+
+
+
+Surface-\/memory variant that writes output via a 2-\/D CUDA surface. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em surface\+\_\+width} & Width of the destination surface (pitch / sizeof(\+Point2\+D)). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction_8h_a1f78ad535714e18c3658ba4c19c58b3e}\label{stream__compaction_8h_a1f78ad535714e18c3658ba4c19c58b3e}} 
+\index{stream\_compaction.h@{stream\_compaction.h}!compactPointsWarpShuffle@{compactPointsWarpShuffle}}
+\index{compactPointsWarpShuffle@{compactPointsWarpShuffle}!stream\_compaction.h@{stream\_compaction.h}}
+\doxysubsubsection{\texorpdfstring{compactPointsWarpShuffle()}{compactPointsWarpShuffle()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void compact\+Points\+Warp\+Shuffle (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+input,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+output,  }\item[{int $\ast$}]{d\+\_\+count,  }\item[{int}]{num\+\_\+points }\end{DoxyParamCaption})}
+
+
+
+Warp-\/level compaction using shuffle and ballot intrinsics. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em d\+\_\+input} & Device pointer to input points. \\
+\hline
+{\em d\+\_\+output} & Device pointer to output buffer. \\
+\hline
+{\em d\+\_\+count} & Device counter updated atomically by lane 0 of each warp. \\
+\hline
+{\em num\+\_\+points} & Total number of input elements. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction_8h_a3c2fd2fff42c672acf824702f733ae72}\label{stream__compaction_8h_a3c2fd2fff42c672acf824702f733ae72}} 
+\index{stream\_compaction.h@{stream\_compaction.h}!isHotPredicateDevice@{isHotPredicateDevice}}
+\index{isHotPredicateDevice@{isHotPredicateDevice}!stream\_compaction.h@{stream\_compaction.h}}
+\doxysubsubsection{\texorpdfstring{isHotPredicateDevice()}{isHotPredicateDevice()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \+\_\+\+\_\+device\+\_\+\+\_\+ bool is\+Hot\+Predicate\+Device (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} \&}]{p }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Return {\ttfamily true} if the point’s temperature exceeds \mbox{\hyperlink{stream__compaction_8h_abd0e2827be8f89d2a4f585459a4fcaac}{d\+\_\+threshold}}. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em p} & Point sample (single precision). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction_8h_ad81bd2995c5b3f76b201c9136b6bc351}\label{stream__compaction_8h_ad81bd2995c5b3f76b201c9136b6bc351}} 
+\index{stream\_compaction.h@{stream\_compaction.h}!isHotPredicateDevice@{isHotPredicateDevice}}
+\index{isHotPredicateDevice@{isHotPredicateDevice}!stream\_compaction.h@{stream\_compaction.h}}
+\doxysubsubsection{\texorpdfstring{isHotPredicateDevice()}{isHotPredicateDevice()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \+\_\+\+\_\+device\+\_\+\+\_\+ bool is\+Hot\+Predicate\+Device (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D__double}{Point2\+D\+\_\+double}} \&}]{p }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Double-\/precision overload of \mbox{\hyperlink{stream__compaction_8h_a3c2fd2fff42c672acf824702f733ae72}{is\+Hot\+Predicate\+Device}}. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em p} & Point sample (double precision). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction_8h_ac10c3c7e665535841f3b59896d3dfda9}\label{stream__compaction_8h_ac10c3c7e665535841f3b59896d3dfda9}} 
+\index{stream\_compaction.h@{stream\_compaction.h}!streamCompactNaive@{streamCompactNaive}}
+\index{streamCompactNaive@{streamCompactNaive}!stream\_compaction.h@{stream\_compaction.h}}
+\doxysubsubsection{\texorpdfstring{streamCompactNaive()}{streamCompactNaive()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void stream\+Compact\+Naive (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{in,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{out,  }\item[{int}]{N,  }\item[{int $\ast$}]{d\+\_\+counter }\end{DoxyParamCaption})}
+
+
+
+Naïve compaction kernel; each valid thread atomically appends to {\ttfamily d\+\_\+counter}. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em in} & Device pointer to input points. \\
+\hline
+{\em out} & Device pointer to output buffer. \\
+\hline
+{\em N} & Number of input elements. \\
+\hline
+{\em d\+\_\+counter} & Device counter for the write position. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction_8h_a4597aa57a6a76f3b82a1ead9d188bf19}\label{stream__compaction_8h_a4597aa57a6a76f3b82a1ead9d188bf19}} 
+\index{stream\_compaction.h@{stream\_compaction.h}!streamCompactShared@{streamCompactShared}}
+\index{streamCompactShared@{streamCompactShared}!stream\_compaction.h@{stream\_compaction.h}}
+\doxysubsubsection{\texorpdfstring{streamCompactShared()}{streamCompactShared()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void stream\+Compact\+Shared (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{in,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{out,  }\item[{int}]{N,  }\item[{float}]{threshold,  }\item[{int $\ast$}]{block\+\_\+counts }\end{DoxyParamCaption})}
+
+
+
+Shared-\/memory kernel that counts valid points per block, then performs a block-\/level exclusive scan before global write-\/out. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em in} & Device pointer to input points. \\
+\hline
+{\em out} & Device pointer to output buffer. \\
+\hline
+{\em N} & Number of input elements. \\
+\hline
+{\em threshold} & Predicate threshold (copied to shared mem for speed). \\
+\hline
+{\em block\+\_\+counts} & Device array (one per block) storing local counts. \\
+\hline
+\end{DoxyParams}

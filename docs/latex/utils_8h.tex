@@ -1,0 +1,209 @@
+\hypertarget{utils_8h}{}\doxysection{include/utils.h File Reference}
+\label{utils_8h}\index{include/utils.h@{include/utils.h}}
+
+
+Helper routines for the Morton-\/curve stream-\/compaction project.  
+
+
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$bitset$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include \char`\"{}common.\+h\char`\"{}}\newline
+Include dependency graph for utils.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{utils_8h__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{utils_8h_a75cff49021322de56bc1db113dcfb640}{binary\+\_\+test}} ()
+\begin{DoxyCompactList}\small\item\em Visualise the bit-\/expansion steps used in 2-\/D Morton encoding. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{utils_8h_a2dd1de10b5a6faeb1dd24160f56da1eb}{print\+\_\+binary}} (unsigned int val, const std\+::string \&label=\char`\"{}\char`\"{})
+\begin{DoxyCompactList}\small\item\em Print an {\ttfamily unsigned int} as binary, prefixed by {\ttfamily label}. \end{DoxyCompactList}\item 
+std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \mbox{\hyperlink{utils_8h_a7145f29ab9871cc7a59d1782ecd45b1c}{generate\+Points}} (int width, int height, float spacing=1.\+0f, int seed=-\/1)
+\begin{DoxyCompactList}\small\item\em Generate a 2-\/D Cartesian grid of points with velocity and temperature. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{utils_8h_ab9f0679ddc8cf7ab8d277255282982a3}{print\+Point\+List}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&points, const std\+::string \&title, int max\+Print=20)
+\begin{DoxyCompactList}\small\item\em Print a subset of points with position, velocity, and temperature. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{utils_8h_aabf56b6b4f034cf4fa76cb118a57c3fc}\label{utils_8h_aabf56b6b4f034cf4fa76cb118a57c3fc}} 
+void \mbox{\hyperlink{utils_8h_aabf56b6b4f034cf4fa76cb118a57c3fc}{sort\+\_\+by\+\_\+morton}} (std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&points)
+\begin{DoxyCompactList}\small\item\em Sort {\ttfamily points} in-\/place on the CPU using std\+::sort and Morton keys. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{utils_8h_a2ce2614ba0623bfca93019e67d3d8fff}{sort\+\_\+by\+\_\+morton\+\_\+thrust}} (std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&points, bool use\+GPU=true)
+\begin{DoxyCompactList}\small\item\em Sort {\ttfamily points} by Morton code using Thrust. \end{DoxyCompactList}\item 
+std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \mbox{\hyperlink{utils_8h_abe5fd556f6ae2c505f5f49a61cb8ed23}{compact\+\_\+stream\+\_\+cpu}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&points, float threshold)
+\begin{DoxyCompactList}\small\item\em CPU reference implementation\+: remove points below {\ttfamily threshold}. \end{DoxyCompactList}\item 
+std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \mbox{\hyperlink{utils_8h_a0f808e1b6761e8c82d92fd0a832f1923}{compact\+\_\+points\+\_\+thrust}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, bool use\+GPU=true)
+\begin{DoxyCompactList}\small\item\em Thrust-\/based compaction (device or host back-\/end). \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{utils_8h_a304441d456935122b7809bb0ebf425bc}{choose\+Cuda\+Card}} (bool verbose=true)
+\begin{DoxyCompactList}\small\item\em Choose the “best” CUDA device (highest multiprocessor count). \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Helper routines for the Morton-\/curve stream-\/compaction project. 
+
+This header gathers assorted utilities\+: • Bit-\/level debugging helpers for Morton encoding. ~\newline
+ • Point-\/set generation, printing, and CPU/\+GPU sorting. ~\newline
+ • CPU and Thrust-\/based reference compaction functions. ~\newline
+ • A simple CUDA-\/device picker that favours multiprocessor count. ~\newline
+
+
+None of the functions allocate long-\/lived resources; they are intended for quick experiments, unit tests, and demo visualisation.
+
+Author\+: Kaixiang Zou ~\newline
+ Version\+: 1.\+1 ~\newline
+ Date\+: 2025-\/07-\/26 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{utils_8h_a75cff49021322de56bc1db113dcfb640}\label{utils_8h_a75cff49021322de56bc1db113dcfb640}} 
+\index{utils.h@{utils.h}!binary\_test@{binary\_test}}
+\index{binary\_test@{binary\_test}!utils.h@{utils.h}}
+\doxysubsubsection{\texorpdfstring{binary\_test()}{binary\_test()}}
+{\footnotesize\ttfamily void binary\+\_\+test (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Visualise the bit-\/expansion steps used in 2-\/D Morton encoding. 
+
+Prints intermediate masks and results to {\ttfamily stdout}. \mbox{\Hypertarget{utils_8h_a304441d456935122b7809bb0ebf425bc}\label{utils_8h_a304441d456935122b7809bb0ebf425bc}} 
+\index{utils.h@{utils.h}!chooseCudaCard@{chooseCudaCard}}
+\index{chooseCudaCard@{chooseCudaCard}!utils.h@{utils.h}}
+\doxysubsubsection{\texorpdfstring{chooseCudaCard()}{chooseCudaCard()}}
+{\footnotesize\ttfamily int choose\+Cuda\+Card (\begin{DoxyParamCaption}\item[{bool}]{verbose = {\ttfamily true} }\end{DoxyParamCaption})}
+
+
+
+Choose the “best” CUDA device (highest multiprocessor count). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em verbose} & If {\ttfamily true}, print the selected device’s properties. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Device ID to pass to {\ttfamily cuda\+Set\+Device}. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{utils_8h_a0f808e1b6761e8c82d92fd0a832f1923}\label{utils_8h_a0f808e1b6761e8c82d92fd0a832f1923}} 
+\index{utils.h@{utils.h}!compact\_points\_thrust@{compact\_points\_thrust}}
+\index{compact\_points\_thrust@{compact\_points\_thrust}!utils.h@{utils.h}}
+\doxysubsubsection{\texorpdfstring{compact\_points\_thrust()}{compact\_points\_thrust()}}
+{\footnotesize\ttfamily std\+::vector$<$\mbox{\hyperlink{structPoint2D}{Point2D}}$>$ compact\+\_\+points\+\_\+thrust (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{input,  }\item[{float}]{threshold,  }\item[{bool}]{use\+GPU = {\ttfamily true} }\end{DoxyParamCaption})}
+
+
+
+Thrust-\/based compaction (device or host back-\/end). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & Input vector. \\
+\hline
+{\em threshold} & Predicate threshold. \\
+\hline
+{\em use\+GPU} & {\ttfamily true} ➔ device back-\/end; {\ttfamily false} ➔ host. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Compacted vector. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{utils_8h_abe5fd556f6ae2c505f5f49a61cb8ed23}\label{utils_8h_abe5fd556f6ae2c505f5f49a61cb8ed23}} 
+\index{utils.h@{utils.h}!compact\_stream\_cpu@{compact\_stream\_cpu}}
+\index{compact\_stream\_cpu@{compact\_stream\_cpu}!utils.h@{utils.h}}
+\doxysubsubsection{\texorpdfstring{compact\_stream\_cpu()}{compact\_stream\_cpu()}}
+{\footnotesize\ttfamily std\+::vector$<$\mbox{\hyperlink{structPoint2D}{Point2D}}$>$ compact\+\_\+stream\+\_\+cpu (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{points,  }\item[{float}]{threshold }\end{DoxyParamCaption})}
+
+
+
+CPU reference implementation\+: remove points below {\ttfamily threshold}. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em points} & Input vector. \\
+\hline
+{\em threshold} & Predicate threshold applied to \mbox{\hyperlink{structPoint2D_a38451f41867db0e32ee7a8b078b271f7}{Point2\+D\+::temp}}. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Compacted vector (host-\/side). 
+\end{DoxyReturn}
+\mbox{\Hypertarget{utils_8h_a7145f29ab9871cc7a59d1782ecd45b1c}\label{utils_8h_a7145f29ab9871cc7a59d1782ecd45b1c}} 
+\index{utils.h@{utils.h}!generatePoints@{generatePoints}}
+\index{generatePoints@{generatePoints}!utils.h@{utils.h}}
+\doxysubsubsection{\texorpdfstring{generatePoints()}{generatePoints()}}
+{\footnotesize\ttfamily std\+::vector$<$\mbox{\hyperlink{structPoint2D}{Point2D}}$>$ generate\+Points (\begin{DoxyParamCaption}\item[{int}]{width,  }\item[{int}]{height,  }\item[{float}]{spacing = {\ttfamily 1.0f},  }\item[{int}]{seed = {\ttfamily -\/1} }\end{DoxyParamCaption})}
+
+
+
+Generate a 2-\/D Cartesian grid of points with velocity and temperature. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em width} & Grid width (points along x). \\
+\hline
+{\em height} & Grid height (points along y). \\
+\hline
+{\em spacing} & Physical spacing between adjacent points. \\
+\hline
+{\em seed} & RNG seed; $<$0 ➔ use std\+::random\+\_\+device. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Vector of generated points (host-\/side). 
+\end{DoxyReturn}
+\mbox{\Hypertarget{utils_8h_a2dd1de10b5a6faeb1dd24160f56da1eb}\label{utils_8h_a2dd1de10b5a6faeb1dd24160f56da1eb}} 
+\index{utils.h@{utils.h}!print\_binary@{print\_binary}}
+\index{print\_binary@{print\_binary}!utils.h@{utils.h}}
+\doxysubsubsection{\texorpdfstring{print\_binary()}{print\_binary()}}
+{\footnotesize\ttfamily void print\+\_\+binary (\begin{DoxyParamCaption}\item[{unsigned int}]{val,  }\item[{const std\+::string \&}]{label = {\ttfamily \char`\"{}\char`\"{}} }\end{DoxyParamCaption})}
+
+
+
+Print an {\ttfamily unsigned int} as binary, prefixed by {\ttfamily label}. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em val} & Value to display. \\
+\hline
+{\em label} & Optional label shown before the binary string. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{utils_8h_ab9f0679ddc8cf7ab8d277255282982a3}\label{utils_8h_ab9f0679ddc8cf7ab8d277255282982a3}} 
+\index{utils.h@{utils.h}!printPointList@{printPointList}}
+\index{printPointList@{printPointList}!utils.h@{utils.h}}
+\doxysubsubsection{\texorpdfstring{printPointList()}{printPointList()}}
+{\footnotesize\ttfamily void print\+Point\+List (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{points,  }\item[{const std\+::string \&}]{title,  }\item[{int}]{max\+Print = {\ttfamily 20} }\end{DoxyParamCaption})}
+
+
+
+Print a subset of points with position, velocity, and temperature. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em points} & Input vector. \\
+\hline
+{\em title} & Header string printed before the list. \\
+\hline
+{\em max\+Print} & Maximum elements to display (useful for large sets). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{utils_8h_a2ce2614ba0623bfca93019e67d3d8fff}\label{utils_8h_a2ce2614ba0623bfca93019e67d3d8fff}} 
+\index{utils.h@{utils.h}!sort\_by\_morton\_thrust@{sort\_by\_morton\_thrust}}
+\index{sort\_by\_morton\_thrust@{sort\_by\_morton\_thrust}!utils.h@{utils.h}}
+\doxysubsubsection{\texorpdfstring{sort\_by\_morton\_thrust()}{sort\_by\_morton\_thrust()}}
+{\footnotesize\ttfamily void sort\+\_\+by\+\_\+morton\+\_\+thrust (\begin{DoxyParamCaption}\item[{std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{points,  }\item[{bool}]{use\+GPU = {\ttfamily true} }\end{DoxyParamCaption})}
+
+
+
+Sort {\ttfamily points} by Morton code using Thrust. 
+
+If {\ttfamily use\+GPU} is {\ttfamily true}, launch a device policy; otherwise fall back to Thrust’s host policy (useful for debugging on non-\/\+CUDA machines).
+
+
+\begin{DoxyParams}{Parameters}
+{\em points} & Input/output vector (modified in-\/place). \\
+\hline
+{\em use\+GPU} & {\ttfamily true} ➔ thrust\+::device; {\ttfamily false} ➔ thrust\+::host. \\
+\hline
+\end{DoxyParams}

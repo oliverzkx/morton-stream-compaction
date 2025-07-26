@@ -1,0 +1,120 @@
+\hypertarget{common_8h}{}\doxysection{include/common.h File Reference}
+\label{common_8h}\index{include/common.h@{include/common.h}}
+
+
+Common data types, constants, and helper predicates used throughout the Morton-\/curve stream-\/compaction project.  
+
+
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+Include dependency graph for common.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=190pt]{common_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{common_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structPoint2D}{Point2D}}
+\begin{DoxyCompactList}\small\item\em Single-\/precision point sample in a 2-\/D flow field. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structPoint2D__double}{Point2\+D\+\_\+double}}
+\begin{DoxyCompactList}\small\item\em Double-\/precision variant of \mbox{\hyperlink{structPoint2D}{Point2D}}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structMortonCodePoint}{Morton\+Code\+Point}}
+\begin{DoxyCompactList}\small\item\em Pairing of a pre-\/computed Morton code with its corresponding point. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structisHotPredicate}{is\+Hot\+Predicate}}
+\begin{DoxyCompactList}\small\item\em Functor version of is\+Hot\+Point (single-\/precision). \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structisHotPredicate__double}{is\+Hot\+Predicate\+\_\+double}}
+\begin{DoxyCompactList}\small\item\em Functor version of is\+Hot\+Point (double-\/precision). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{common_8h_ad51ded0bbd705f02f73fc60c0b721ced}\label{common_8h_ad51ded0bbd705f02f73fc60c0b721ced}} 
+\#define \mbox{\hyperlink{common_8h_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\+\_\+\+SIZE}}~256
+\begin{DoxyCompactList}\small\item\em Default CUDA thread-\/block size used across kernels. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+host\+\_\+\+\_\+ \+\_\+\+\_\+device\+\_\+\+\_\+ unsigned int \mbox{\hyperlink{common_8h_a77c8f34727418d4dc153930e4d3e06b8}{morton2\+D\+\_\+encode}} (unsigned int x, unsigned int y)
+\begin{DoxyCompactList}\small\item\em Encode a 2-\/D integer coordinate (x, y) into a 32-\/bit Morton code. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+host\+\_\+\+\_\+ \+\_\+\+\_\+device\+\_\+\+\_\+ bool \mbox{\hyperlink{common_8h_abd89ebbe403cd8ffb10decf68ede1ac5}{is\+Hot\+Point}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} \&p, float threshold)
+\begin{DoxyCompactList}\small\item\em Check whether a point’s temperature exceeds {\ttfamily threshold}. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{common_8h_aa3b96dcd98e1abd227e3ed4a6ffa0d68}\label{common_8h_aa3b96dcd98e1abd227e3ed4a6ffa0d68}} 
+\+\_\+\+\_\+host\+\_\+\+\_\+ \+\_\+\+\_\+device\+\_\+\+\_\+ bool \mbox{\hyperlink{common_8h_aa3b96dcd98e1abd227e3ed4a6ffa0d68}{is\+Hot\+Point}} (const \mbox{\hyperlink{structPoint2D__double}{Point2\+D\+\_\+double}} \&p, double threshold)
+\begin{DoxyCompactList}\small\item\em Double-\/precision overload of is\+Hot\+Point. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Common data types, constants, and helper predicates used throughout the Morton-\/curve stream-\/compaction project. 
+
+The header defines\+: • Fundamental compile-\/time constants (e.\+g. BLOCK\+\_\+\+SIZE). ~\newline
+ • Core point structures in both single-\/ and double-\/precision. ~\newline
+ • A Morton-\/code/point pairing used for locality sorting. ~\newline
+ • Lightweight host/device helpers and predicates that identify “hot” points whose temperature exceeds a user-\/supplied threshold.
+
+All entities are simple PODs or inline functions so the header can be included by both host-\/only and CUDA device code without side effects.
+
+\begin{DoxyAuthor}{Author}
+Kaixiang Zou 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+2 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/07-\/26 
+\end{DoxyDate}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{common_8h_abd89ebbe403cd8ffb10decf68ede1ac5}\label{common_8h_abd89ebbe403cd8ffb10decf68ede1ac5}} 
+\index{common.h@{common.h}!isHotPoint@{isHotPoint}}
+\index{isHotPoint@{isHotPoint}!common.h@{common.h}}
+\doxysubsubsection{\texorpdfstring{isHotPoint()}{isHotPoint()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+host\+\_\+\+\_\+ \+\_\+\+\_\+device\+\_\+\+\_\+ bool is\+Hot\+Point (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} \&}]{p,  }\item[{float}]{threshold }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Check whether a point’s temperature exceeds {\ttfamily threshold}. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em p} & Point sample to test. \\
+\hline
+{\em threshold} & Temperature threshold. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if {\ttfamily p.\+temp} $>$ {\ttfamily threshold}. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{common_8h_a77c8f34727418d4dc153930e4d3e06b8}\label{common_8h_a77c8f34727418d4dc153930e4d3e06b8}} 
+\index{common.h@{common.h}!morton2D\_encode@{morton2D\_encode}}
+\index{morton2D\_encode@{morton2D\_encode}!common.h@{common.h}}
+\doxysubsubsection{\texorpdfstring{morton2D\_encode()}{morton2D\_encode()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+host\+\_\+\+\_\+ \+\_\+\+\_\+device\+\_\+\+\_\+ unsigned int morton2\+D\+\_\+encode (\begin{DoxyParamCaption}\item[{unsigned int}]{x,  }\item[{unsigned int}]{y }\end{DoxyParamCaption})}
+
+
+
+Encode a 2-\/D integer coordinate (x, y) into a 32-\/bit Morton code. 
+
+The implementation (in morton.\+cu) interleaves bits of {\ttfamily x} and {\ttfamily y} to produce a Z-\/order index that preserves spatial locality.
+
+
+\begin{DoxyParams}{Parameters}
+{\em x} & The x-\/coordinate (least-\/significant 16 bits are used). \\
+\hline
+{\em y} & The y-\/coordinate (least-\/significant 16 bits are used). \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+32-\/bit Morton code. 
+\end{DoxyReturn}

@@ -1,27 +1,27 @@
-// stream_compaction.cu
+/******************************************************************************
+ * @file    stream_compaction.cu
+ * @brief   Complete GPU stream‑compaction reference — five kernel families
+ *          (Naïve, Shared‑mem Scan, Warp Shuffle, Bitmask, Bitmask‑Surface)
+ *          together with host‑side wrappers and timing helpers.
+ *
+ *          All public symbols are declared in **stream_compaction.h**; this
+ *          implementation file is purely C++/CUDA and can be dropped into a
+ *          CMake / nvcc build.  To keep the lines short, some common macros
+ *          such as `BLOCK_SIZE` (default 256) live in **common.h**.
+ *
+ * @author  Kaixiang Zou  <gracefulblack2001@gmail.com>
+ * @version 1.0
+ * @date    2025‑07‑26
+ *****************************************************************************/
+
 #include <cuda_runtime.h>
 #include "stream_compaction.h"
 #include "common.h"          // <- contains typedef Point, predicate, etc.
 #include <iostream>
 
-__device__ __constant__ float d_threshold;
-__constant__ double d_threshold_double;
+__device__ __constant__ float d_threshold; //!< float threshold
+__constant__ double d_threshold_double; //!< double threshold
 
-
-// -------------------- device predicate --------------------
-/**
- * @brief Device-side predicate function.
- *        Determines whether a given Point meets the compaction condition.
- * @param p Input point
- * @return true if the point should be retained, false otherwise
- */
-/*
-__device__ inline bool isHotPredicateDevice(const Point2D& p)
-{
-    isHotPredicate pred{30.0f}; 
-    return pred(p);
-}
-*/
 
 __device__ inline bool isHotPredicateDevice(const Point2D& p)
 {
@@ -211,57 +211,6 @@ void compactSharedGPU(const Point2D* d_in, Point2D* d_out, int N,
 
 
 /**
- * @brief Test the naive GPU stream compaction method with timing.
- *
- * This function allocates memory, launches the naive compaction kernel,
- * copies results back to host, and reports execution time.
- *
- * @param input        Input vector of Point2D elements.
- * @param threshold    Temperature threshold for filtering.
- * @param output       Vector to store the compacted results.
- */
-/*
-void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
-    int N = input.size();
-    Point2D* d_input = nullptr;
-    Point2D* d_output = nullptr;
-    int compactedCount = 0;
-
-    cudaMalloc(&d_input, N * sizeof(Point2D));
-    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
-    cudaMalloc(&d_output, N * sizeof(Point2D));
-
-    // 💡 Copy threshold value to constant memory before kernel launch
-    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
-
-    // ⏱️ Start GPU timing
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
-
-    // 🚀 Launch naive compaction kernel
-    compactNaiveGPU(d_input, d_output, N, compactedCount);
-
-    // ⏱️ Stop timing
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "⏱️ Naive GPU compaction time: " << milliseconds << " ms\n";
-
-    output.resize(compactedCount);
-    cudaMemcpy(output.data(), d_output, compactedCount * sizeof(Point2D), cudaMemcpyDeviceToHost);
-
-    cudaFree(d_input);
-    cudaFree(d_output);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-}
-*/
-
-/**
  * @brief Test the naive GPU stream compaction method with full timing.
  *
  * This function allocates device memory, transfers input data,
@@ -320,59 +269,6 @@ void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, 
     cudaEventDestroy(stop);
 }
 
-
-
-/**
- * @brief Test the shared memory + block scan GPU stream compaction method        with timing.
- *
- * This function allocates memory, launches the optimized shared memory compaction kernel,
- * copies results back to host, and reports execution time.
- *
- * @param input        Input vector of Point2D elements.
- * @param threshold    Temperature threshold for filtering.
- * @param output       Vector to store the compacted results.
- */
-/*
-void testSharedGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
-    int N = input.size();
-    Point2D* d_input = nullptr;
-    Point2D* d_output = nullptr;
-    int compactedCount = 0;
-
-    cudaMalloc(&d_input, N * sizeof(Point2D));
-    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
-    cudaMalloc(&d_output, N * sizeof(Point2D));
-
-
-    // 💡 Copy threshold value to constant memory before kernel launch
-    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
-
-    // ⏱️ Start GPU timing
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
-
-    // 🚀 Launch shared memory compaction kernel
-    compactSharedGPU(d_input, d_output, N, threshold, compactedCount);
-
-    // ⏱️ Stop timing
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "⏱️ Shared Memory GPU compaction time: " << milliseconds << " ms\n";
-
-    output.resize(compactedCount);
-    cudaMemcpy(output.data(), d_output, compactedCount * sizeof(Point2D), cudaMemcpyDeviceToHost);
-
-    cudaFree(d_input);
-    cudaFree(d_output);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-}
-*/
 
 /**
  * @brief Test the shared memory + block scan GPU stream compaction method with timing.
@@ -562,66 +458,6 @@ void compact_points_warp(
     cudaDeviceSynchronize();
 }
 
-
-
-/**
- * @brief Test warp-shuffle-based GPU compaction using given input and threshold.
- *
- * @param input Vector of input points
- * @param threshold Threshold to determine "hot" points
- * @param output Vector to store compacted results
- */
-/*
-void testWarpGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
-    std::cout << "\n[GPU] Testing Warp Shuffle Stream Compaction..." << std::endl;
-
-    int N = input.size();
-
-    // Allocate device memory
-    Point2D* d_input;
-    Point2D* d_output;
-    int* d_count;
-    cudaMalloc(&d_input, N * sizeof(Point2D));
-    cudaMalloc(&d_output, N * sizeof(Point2D));
-    cudaMalloc(&d_count, sizeof(int));
-
-    // Copy input to device
-    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
-
-    // ✅ Copy threshold to constant memory
-    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
-
-    // Timing setup
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
-
-    // Launch wrapper
-    compact_points_warp(d_input, d_output, d_count, N);
-
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    float milliseconds = 0.0f;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "    [Timing] Elapsed time: " << milliseconds << " ms\n";
-
-    // Copy results back
-    int h_count = 0;
-    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
-    output.resize(h_count);
-    cudaMemcpy(output.data(), d_output, h_count * sizeof(Point2D), cudaMemcpyDeviceToHost);
-
-    std::cout << "    [Result] Compacted count = " << h_count << "\n";
-
-    // Cleanup
-    cudaFree(d_input);
-    cudaFree(d_output);
-    cudaFree(d_count);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-}
-*/
 
 /**
  * @brief Test warp-shuffle-based GPU compaction using given input and threshold.
@@ -842,67 +678,6 @@ void compact_points_bitmask_surface(
     cudaDeviceSynchronize();
 }
 
-/**
- * @brief Test bitmask-based GPU stream compaction.
- *
- * @param input Input vector of Point2D
- * @param threshold Threshold value to determine "hot" points
- * @param output Output vector to store compacted result
- */
-/*
-void testBitmaskGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
-    std::cout << "\n[GPU] Testing Bitmask Stream Compaction..." << std::endl;
-
-    int N = input.size();
-
-    // Allocate device memory
-    Point2D* d_input;
-    Point2D* d_output;
-    int* d_count;
-    cudaMalloc(&d_input, N * sizeof(Point2D));
-    cudaMalloc(&d_output, N * sizeof(Point2D));
-    cudaMalloc(&d_count, sizeof(int));
-
-    // Copy input to device
-    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
-
-    // ✅ Copy threshold to constant memory
-    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
-
-    // Set threshold if needed — skip this if you hardcoded in device predicate
-    // setHotPredicateThreshold(threshold);  // optional if threshold is global
-
-    // Timing setup
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
-
-    // Launch compaction
-    compact_points_bitmask(d_input, d_output, d_count, N);
-
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    float milliseconds = 0.0f;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "    [Timing] Elapsed time: " << milliseconds << " ms\n";
-
-    // Copy result count and data back to host
-    int h_count = 0;
-    cudaMemcpy(&h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
-    output.resize(h_count);
-    cudaMemcpy(output.data(), d_output, h_count * sizeof(Point2D), cudaMemcpyDeviceToHost);
-
-    std::cout << "    [Result] Compacted count = " << h_count << "\n";
-
-    // Cleanup
-    cudaFree(d_input);
-    cudaFree(d_output);
-    cudaFree(d_count);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-}
-*/
 
 /**
  * @brief Test bitmask-based GPU stream compaction.
@@ -1156,22 +931,6 @@ __global__ void compact_points_bitmask_double(
         d_output[output_index] = pt;
     }
 }
-
-/**
- * @brief Device-side predicate function for identifying "hot" points (double precision).
- *
- * This function determines whether a given 2D point exceeds the temperature threshold.
- * It compares the temperature field `temp` of a Point2D_double against a constant
- * double-precision threshold value `d_threshold_double`, which resides in device constant memory.
- *
- * @param pt The input point of type Point2D_double.
- * @return true if the point's temperature is greater than the threshold; false otherwise.
- */
-/*
-__device__ bool isHotPredicateDevice(Point2D_double pt) {
-    return pt.temp > d_threshold_double;
-}
-*/
 
 
 /**

@@ -1,0 +1,108 @@
+\hypertarget{benchmark__utils_8h}{}\doxysection{include/benchmark\+\_\+utils.h File Reference}
+\label{benchmark__utils_8h}\index{include/benchmark\_utils.h@{include/benchmark\_utils.h}}
+
+
+GPU benchmark utility interfaces.  
+
+
+{\ttfamily \#include \char`\"{}common.\+h\char`\"{}}\newline
+Include dependency graph for benchmark\+\_\+utils.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=225pt]{benchmark__utils_8h__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{benchmark__utils_8h_a53214d8e6564edb02cd4cbc627d73411}{print\+Points\+Comparison}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&gpu\+\_\+output, const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&cpu\+\_\+baseline)
+\begin{DoxyCompactList}\small\item\em Print a side-\/by-\/side comparison between GPU output and CPU baseline. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{benchmark__utils_8h_a6fbde5ab22ecc61984221634ec81e2f6}{run\+Bitmask\+Benchmark}} (int size, int block\+Size, const std\+::string \&precision, float \&time\+\_\+ms, float \&error)
+\begin{DoxyCompactList}\small\item\em Launch a bitmask stream-\/compaction benchmark. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{benchmark__utils_8h_a33432aa6df4b62eca1e7000e8d566881}{compare\+Morton}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} \&a, const \mbox{\hyperlink{structPoint2D}{Point2D}} \&b)
+\begin{DoxyCompactList}\small\item\em Comparator for sorting points by Morton code. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+GPU benchmark utility interfaces. 
+
+This header provides helper functions to facilitate performance benchmarking and accuracy checking of different stream-\/compaction kernels.
+
+It centralizes commonly-\/used routines such as result comparison, automated batch execution, and Morton-\/code-\/based ordering utilities.
+
+\begin{DoxyAuthor}{Author}
+Kaixiang Zou 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+1 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/07-\/26 
+\end{DoxyDate}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{benchmark__utils_8h_a33432aa6df4b62eca1e7000e8d566881}\label{benchmark__utils_8h_a33432aa6df4b62eca1e7000e8d566881}} 
+\index{benchmark\_utils.h@{benchmark\_utils.h}!compareMorton@{compareMorton}}
+\index{compareMorton@{compareMorton}!benchmark\_utils.h@{benchmark\_utils.h}}
+\doxysubsubsection{\texorpdfstring{compareMorton()}{compareMorton()}}
+{\footnotesize\ttfamily bool compare\+Morton (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} \&}]{a,  }\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} \&}]{b }\end{DoxyParamCaption})}
+
+
+
+Comparator for sorting points by Morton code. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em a} & First point to compare. \\
+\hline
+{\em b} & Second point to compare. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if the Morton code of {\ttfamily a} precedes that of {\ttfamily b}. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{benchmark__utils_8h_a53214d8e6564edb02cd4cbc627d73411}\label{benchmark__utils_8h_a53214d8e6564edb02cd4cbc627d73411}} 
+\index{benchmark\_utils.h@{benchmark\_utils.h}!printPointsComparison@{printPointsComparison}}
+\index{printPointsComparison@{printPointsComparison}!benchmark\_utils.h@{benchmark\_utils.h}}
+\doxysubsubsection{\texorpdfstring{printPointsComparison()}{printPointsComparison()}}
+{\footnotesize\ttfamily void print\+Points\+Comparison (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{gpu\+\_\+output,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{cpu\+\_\+baseline }\end{DoxyParamCaption})}
+
+
+
+Print a side-\/by-\/side comparison between GPU output and CPU baseline. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em gpu\+\_\+output} & Vector of points computed on the GPU. \\
+\hline
+{\em cpu\+\_\+baseline} & Vector of reference points computed on the CPU. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{benchmark__utils_8h_a6fbde5ab22ecc61984221634ec81e2f6}\label{benchmark__utils_8h_a6fbde5ab22ecc61984221634ec81e2f6}} 
+\index{benchmark\_utils.h@{benchmark\_utils.h}!runBitmaskBenchmark@{runBitmaskBenchmark}}
+\index{runBitmaskBenchmark@{runBitmaskBenchmark}!benchmark\_utils.h@{benchmark\_utils.h}}
+\doxysubsubsection{\texorpdfstring{runBitmaskBenchmark()}{runBitmaskBenchmark()}}
+{\footnotesize\ttfamily void run\+Bitmask\+Benchmark (\begin{DoxyParamCaption}\item[{int}]{size,  }\item[{int}]{block\+Size,  }\item[{const std\+::string \&}]{precision,  }\item[{float \&}]{time\+\_\+ms,  }\item[{float \&}]{error }\end{DoxyParamCaption})}
+
+
+
+Launch a bitmask stream-\/compaction benchmark. 
+
+This function allocates device buffers, runs the specified kernel, measures runtime via CUDA events, and returns error metrics against the CPU baseline.
+
+
+\begin{DoxyParams}{Parameters}
+{\em size} & Number of input elements to process. \\
+\hline
+{\em block\+Size} & CUDA thread-\/block size. \\
+\hline
+{\em precision} & Precision mode string\+: \char`\"{}float\char`\"{} or \char`\"{}double\char`\"{}. \\
+\hline
+{\em time\+\_\+ms} & Output\+: measured kernel time in milliseconds. \\
+\hline
+{\em error} & Output\+: RMS error against CPU baseline. \\
+\hline
+\end{DoxyParams}

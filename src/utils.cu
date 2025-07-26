@@ -82,31 +82,6 @@ std::vector<Point2D> generatePoints(int width, int height, float spacing, int se
     return points;
 }
 
-/**
- * @brief Print a list of 2D points including position, wind, and temperature.
- *
- * This function prints out each point in a given list, including its (x, y) position,
- * wind velocity vector (vx, vy), and temperature value. It optionally takes a title
- * to label the output section.
- *
- * @param points A vector of Point2D containing all the points to print.
- * @param title  Optional title string to label the print section.
- */
-/*
-void printPointList(const std::vector<Point2D>& points, const std::string& title) {
-    // Print a title header if provided
-    if (!title.empty()) {
-        std::cout << "🌀 " << title << " (" << points.size() << " points):" << std::endl;
-    }
-    for (const auto& p : points) {
-        std::cout << std::fixed << std::setprecision(2)
-                  << "(" << p.x << ", " << p.y << ")"    // Position
-                  << "  V=(" << p.vx << ", " << p.vy << ")"  // Wind vector
-                  << "  Temp=" << p.temp << std::endl;   // Temperature
-    }
-    std::cout << std::endl;
-}
-*/
 
 /**
  * @brief Print a list of 2D points including position, wind vector, and temperature.

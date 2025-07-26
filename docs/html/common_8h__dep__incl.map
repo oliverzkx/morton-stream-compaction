@@ -1,0 +1,7 @@
+<map id="include/common.h" name="include/common.h">
+<area shape="rect" id="node1" title="Common data types, constants, and helper predicates used throughout the Morton&#45;curve stream&#45;compactio..." alt="" coords="375,5,517,32"/>
+<area shape="rect" id="node2" href="$benchmark__utils_8h.html" title="GPU benchmark utility interfaces." alt="" coords="5,87,199,114"/>
+<area shape="rect" id="node3" href="$stream__compaction_8h.html" title="Naïve, shared&#45;memory, warp&#45;shuffle, and bitmask variants of stream compaction for a single Morton&#45;cur..." alt="" coords="223,87,437,114"/>
+<area shape="rect" id="node4" href="$stream__compaction__bin_8h.html" title="Interfaces for Morton&#45;code, bin&#45;aware stream&#45;compaction." alt="" coords="462,80,665,121"/>
+<area shape="rect" id="node5" href="$utils_8h.html" title="Helper routines for the Morton&#45;curve stream&#45;compaction project." alt="" coords="689,87,803,114"/>
+</map>

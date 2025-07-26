@@ -1,0 +1,337 @@
+\hypertarget{stream__compaction__bin_8h}{}\doxysection{include/stream\+\_\+compaction\+\_\+bin.h File Reference}
+\label{stream__compaction__bin_8h}\index{include/stream\_compaction\_bin.h@{include/stream\_compaction\_bin.h}}
+
+
+Interfaces for Morton-\/code, bin-\/aware stream-\/compaction.  
+
+
+{\ttfamily \#include $<$cstdint$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include \char`\"{}common.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}bin\+\_\+kernel.\+h\char`\"{}}\newline
+Include dependency graph for stream\+\_\+compaction\+\_\+bin.\+h\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{stream__compaction__bin_8h__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{stream__compaction__bin_8h_aeed91f4fc916a3e9cf9fcb3e7fcef07f}{compute\+Bin\+Offsets}} (const uint32\+\_\+t $\ast$morton\+Codes, int num\+Points, int k\+Bits, int $\ast$bin\+Offsets, int $\ast$bin\+Sizes)
+\begin{DoxyCompactList}\small\item\em Compute per-\/bin offsets and sizes from Morton codes. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{stream__compaction__bin_8h_a57fa6a8bfa5f75c6100b87548c35a72b}{compact\+With\+Bins\+GPU}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+out, const uint32\+\_\+t $\ast$morton\+Codes, int num\+Points, int k\+Bits, int $\ast$d\+\_\+out\+Count)
+\begin{DoxyCompactList}\small\item\em End-\/to-\/end bin pipeline (histogram → scan → scatter → per-\/bin compaction). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{stream__compaction__bin_8h_a6a8e3728b983d17e7150e87f4d216e9e}{run\+Bitmask\+Benchmark\+With\+Bins}} (int size, int block\+Size, const std\+::string \&precision, float \&time\+\_\+ms, float \&error)
+\begin{DoxyCompactList}\small\item\em Run a bin-\/aware {\itshape bitmask} compaction benchmark and capture timing / error. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{stream__compaction__bin_8h_ab0e8ce3757c47d8581d678ad130c1d56}{test\+Bin\+GPUCompaction}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, int k\+Bits, std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&output)
+\begin{DoxyCompactList}\small\item\em Convenience wrapper\+: complete bin pipeline, returns compacted output. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{stream__compaction__bin_8h_a456cdd2ebf1318a372af96f216e2f709}{test\+Bin\+GPUCompaction\+\_\+atomic}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, int k\+Bits, std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&output, float \&t\+\_\+kernel\+\_\+ms, float \&t\+\_\+total\+\_\+ms)
+\begin{DoxyCompactList}\small\item\em Single-\/pass atomic version for quick prototyping / fallback. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{stream__compaction__bin_8h_aebc92c903fd0ddb08cc5e13829c1c54f}{test\+Bin\+GPUCompaction\+\_\+partition}} (const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&input, float threshold, int k\+Bits, std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&output, float \&t\+\_\+kernel\+\_\+ms, float \&t\+\_\+total\+\_\+ms, \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}} kernel\+Kind)
+\begin{DoxyCompactList}\small\item\em Plan-\/A pipeline wrapper that lets the caller choose a \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}} variant. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{stream__compaction__bin_8h_ad9b8d12311808d4dfa01e43f351dfaf4}{compact\+Warp\+GPU}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+out, int N, float threshold, int \&h\+\_\+out\+Count)
+\begin{DoxyCompactList}\small\item\em Warp-\/level compaction of a single contiguous bin (micro-\/benchmark). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{stream__compaction__bin_8h_a5ab6c36d47b7649613184123967655aa}{compact\+One\+Bin}} (\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$d\+\_\+out, int N, float threshold, int \&h\+\_\+out\+Cnt, \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}} kind)
+\begin{DoxyCompactList}\small\item\em Dispatch a chosen \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}} variant to compact one bin. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction__bin_8h_a86b0105883e565ff1437cd854477bd67}{histogram\+Bins}} (const uint32\+\_\+t $\ast$codes, int $\ast$bin\+Sizes, int N, int mask)
+\begin{DoxyCompactList}\small\item\em Build a per-\/bin histogram (bin sizes) from Morton codes. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction__bin_8h_ab68fb6673f8d580ea8f26f45591b5073}{scatter\+To\+Bins}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$tmp, const uint32\+\_\+t $\ast$codes, int $\ast$bin\+Cursor, int N, int mask)
+\begin{DoxyCompactList}\small\item\em Scatter points so that each bin occupies a contiguous slice. \end{DoxyCompactList}\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \mbox{\hyperlink{stream__compaction__bin_8h_add7d3d9be924b74244c3dad700aca042}{compact\+Bin\+Atomic}} (const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$in, \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$out, int $\ast$bin\+Cursor, const uint32\+\_\+t $\ast$codes, int N, int mask, float threshold)
+\begin{DoxyCompactList}\small\item\em Atomic fallback kernel that compacts one bin in a single pass. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Interfaces for Morton-\/code, bin-\/aware stream-\/compaction. 
+
+The routines declared here implement a “partition-\/then-\/compact” pipeline\+:
+\begin{DoxyEnumerate}
+\item Build a per-\/bin histogram from the lowest {\ttfamily k\+Bits} of each Morton code.
+\item Prefix-\/scan the histogram to obtain per-\/bin offsets.
+\item Scatter points so each bin forms a contiguous slice in memory.
+\item Compact every bin with a chosen kernel variant (shared memory, warp intrinsics, bitmask, or atomic fallback).
+\end{DoxyEnumerate}
+
+Host-\/side helpers are provided for benchmarking, autotuning, and measuring end-\/to-\/end GPU time. Device-\/side kernels are declared so that downstream translation units may launch them directly.
+
+\begin{DoxyAuthor}{Author}
+Kaixiang Zou 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+3 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/07-\/26 
+\end{DoxyDate}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{stream__compaction__bin_8h_add7d3d9be924b74244c3dad700aca042}\label{stream__compaction__bin_8h_add7d3d9be924b74244c3dad700aca042}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!compactBinAtomic@{compactBinAtomic}}
+\index{compactBinAtomic@{compactBinAtomic}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{compactBinAtomic()}{compactBinAtomic()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void compact\+Bin\+Atomic (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{in,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{out,  }\item[{int $\ast$}]{bin\+Cursor,  }\item[{const uint32\+\_\+t $\ast$}]{codes,  }\item[{int}]{N,  }\item[{int}]{mask,  }\item[{float}]{threshold }\end{DoxyParamCaption})}
+
+
+
+Atomic fallback kernel that compacts one bin in a single pass. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em in} & Input points (device). \\
+\hline
+{\em out} & Output buffer (device). \\
+\hline
+{\em bin\+Cursor} & Device counter pointing to the next free slot. \\
+\hline
+{\em codes} & Morton codes (device). \\
+\hline
+{\em N} & Elements in the bin. \\
+\hline
+{\em mask} & (1 $<$$<$ k\+Bits) − 1 bit-\/mask to extract the bin ID. \\
+\hline
+{\em threshold} & Predicate threshold for is\+Hot. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_a5ab6c36d47b7649613184123967655aa}\label{stream__compaction__bin_8h_a5ab6c36d47b7649613184123967655aa}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!compactOneBin@{compactOneBin}}
+\index{compactOneBin@{compactOneBin}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{compactOneBin()}{compactOneBin()}}
+{\footnotesize\ttfamily void compact\+One\+Bin (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+in,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+out,  }\item[{int}]{N,  }\item[{float}]{threshold,  }\item[{int \&}]{h\+\_\+out\+Cnt,  }\item[{\mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}}}]{kind }\end{DoxyParamCaption})}
+
+
+
+Dispatch a chosen \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}} variant to compact one bin. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em d\+\_\+in} & Device pointer to contiguous bin input. \\
+\hline
+{\em d\+\_\+out} & Device pointer to output buffer base. \\
+\hline
+{\em N} & Elements in the bin. \\
+\hline
+{\em threshold} & Predicate threshold for is\+Hot. \\
+\hline
+{\em h\+\_\+out\+Cnt} & Returns number of valid points (host-\/side). \\
+\hline
+{\em kind} & Kernel strategy (shared / warp / bitmask / auto). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_ad9b8d12311808d4dfa01e43f351dfaf4}\label{stream__compaction__bin_8h_ad9b8d12311808d4dfa01e43f351dfaf4}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!compactWarpGPU@{compactWarpGPU}}
+\index{compactWarpGPU@{compactWarpGPU}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{compactWarpGPU()}{compactWarpGPU()}}
+{\footnotesize\ttfamily void compact\+Warp\+GPU (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+in,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+out,  }\item[{int}]{N,  }\item[{float}]{threshold,  }\item[{int \&}]{h\+\_\+out\+Count }\end{DoxyParamCaption})}
+
+
+
+Warp-\/level compaction of a single contiguous bin (micro-\/benchmark). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em d\+\_\+in} & Device pointer to bin input (contiguous). \\
+\hline
+{\em d\+\_\+out} & Device pointer to output buffer. \\
+\hline
+{\em N} & Elements in the bin. \\
+\hline
+{\em threshold} & Predicate threshold for is\+Hot. \\
+\hline
+{\em h\+\_\+out\+Count} & Returns number of valid points (host-\/side). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_a57fa6a8bfa5f75c6100b87548c35a72b}\label{stream__compaction__bin_8h_a57fa6a8bfa5f75c6100b87548c35a72b}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!compactWithBinsGPU@{compactWithBinsGPU}}
+\index{compactWithBinsGPU@{compactWithBinsGPU}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{compactWithBinsGPU()}{compactWithBinsGPU()}}
+{\footnotesize\ttfamily void compact\+With\+Bins\+GPU (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+in,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{d\+\_\+out,  }\item[{const uint32\+\_\+t $\ast$}]{morton\+Codes,  }\item[{int}]{num\+Points,  }\item[{int}]{k\+Bits,  }\item[{int $\ast$}]{d\+\_\+out\+Count }\end{DoxyParamCaption})}
+
+
+
+End-\/to-\/end bin pipeline (histogram → scan → scatter → per-\/bin compaction). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em d\+\_\+in} & Device pointer to input points. \\
+\hline
+{\em d\+\_\+out} & Device pointer to output buffer. \\
+\hline
+{\em morton\+Codes} & Device array of Morton codes corresponding to {\ttfamily d\+\_\+in}. \\
+\hline
+{\em num\+Points} & Total number of input points. \\
+\hline
+{\em k\+Bits} & Number of low Morton bits used for the bin ID. \\
+\hline
+{\em d\+\_\+out\+Count} & Device pointer receiving total number of valid points. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_aeed91f4fc916a3e9cf9fcb3e7fcef07f}\label{stream__compaction__bin_8h_aeed91f4fc916a3e9cf9fcb3e7fcef07f}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!computeBinOffsets@{computeBinOffsets}}
+\index{computeBinOffsets@{computeBinOffsets}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{computeBinOffsets()}{computeBinOffsets()}}
+{\footnotesize\ttfamily void compute\+Bin\+Offsets (\begin{DoxyParamCaption}\item[{const uint32\+\_\+t $\ast$}]{morton\+Codes,  }\item[{int}]{num\+Points,  }\item[{int}]{k\+Bits,  }\item[{int $\ast$}]{bin\+Offsets,  }\item[{int $\ast$}]{bin\+Sizes }\end{DoxyParamCaption})}
+
+
+
+Compute per-\/bin offsets and sizes from Morton codes. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em morton\+Codes} & Device array of Morton codes (length = {\ttfamily num\+Points}). \\
+\hline
+{\em num\+Points} & Total number of points. \\
+\hline
+{\em k\+Bits} & Number of low bits that define the bin ID (bins = 2$^\wedge$k\+Bits). \\
+\hline
+{\em bin\+Offsets} & Device array (length = 2$^\wedge$k\+Bits) that receives start indices. \\
+\hline
+{\em bin\+Sizes} & Device array (length = 2$^\wedge$k\+Bits) that receives element counts. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_a86b0105883e565ff1437cd854477bd67}\label{stream__compaction__bin_8h_a86b0105883e565ff1437cd854477bd67}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!histogramBins@{histogramBins}}
+\index{histogramBins@{histogramBins}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{histogramBins()}{histogramBins()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void histogram\+Bins (\begin{DoxyParamCaption}\item[{const uint32\+\_\+t $\ast$}]{codes,  }\item[{int $\ast$}]{bin\+Sizes,  }\item[{int}]{N,  }\item[{int}]{mask }\end{DoxyParamCaption})}
+
+
+
+Build a per-\/bin histogram (bin sizes) from Morton codes. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em codes} & Device array of Morton codes. \\
+\hline
+{\em bin\+Sizes} & Device array (length = num\+Bins) initialised to zero. \\
+\hline
+{\em N} & Total number of points. \\
+\hline
+{\em mask} & (1 $<$$<$ k\+Bits) − 1 bit-\/mask to extract the bin ID. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_a6a8e3728b983d17e7150e87f4d216e9e}\label{stream__compaction__bin_8h_a6a8e3728b983d17e7150e87f4d216e9e}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!runBitmaskBenchmarkWithBins@{runBitmaskBenchmarkWithBins}}
+\index{runBitmaskBenchmarkWithBins@{runBitmaskBenchmarkWithBins}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{runBitmaskBenchmarkWithBins()}{runBitmaskBenchmarkWithBins()}}
+{\footnotesize\ttfamily void run\+Bitmask\+Benchmark\+With\+Bins (\begin{DoxyParamCaption}\item[{int}]{size,  }\item[{int}]{block\+Size,  }\item[{const std\+::string \&}]{precision,  }\item[{float \&}]{time\+\_\+ms,  }\item[{float \&}]{error }\end{DoxyParamCaption})}
+
+
+
+Run a bin-\/aware {\itshape bitmask} compaction benchmark and capture timing / error. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em size} & Number of input elements. \\
+\hline
+{\em block\+Size} & CUDA thread-\/block size. \\
+\hline
+{\em precision} & \char`\"{}float\char`\"{} or \char`\"{}double\char`\"{}. \\
+\hline
+{\em time\+\_\+ms} & Returns measured GPU time (ms). \\
+\hline
+{\em error} & Returns RMS error against the CPU reference. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_ab68fb6673f8d580ea8f26f45591b5073}\label{stream__compaction__bin_8h_ab68fb6673f8d580ea8f26f45591b5073}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!scatterToBins@{scatterToBins}}
+\index{scatterToBins@{scatterToBins}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{scatterToBins()}{scatterToBins()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void scatter\+To\+Bins (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{in,  }\item[{\mbox{\hyperlink{structPoint2D}{Point2D}} $\ast$}]{tmp,  }\item[{const uint32\+\_\+t $\ast$}]{codes,  }\item[{int $\ast$}]{bin\+Cursor,  }\item[{int}]{N,  }\item[{int}]{mask }\end{DoxyParamCaption})}
+
+
+
+Scatter points so that each bin occupies a contiguous slice. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em in} & Input points (device). \\
+\hline
+{\em tmp} & Scratch buffer (device, length = N). \\
+\hline
+{\em codes} & Morton codes (device). \\
+\hline
+{\em bin\+Cursor} & Device array initialised with bin\+Offsets; atomically incremented by each thread when it places its point. \\
+\hline
+{\em N} & Total number of points. \\
+\hline
+{\em mask} & (1 $<$$<$ k\+Bits) − 1 bit-\/mask to extract the bin ID. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_ab0e8ce3757c47d8581d678ad130c1d56}\label{stream__compaction__bin_8h_ab0e8ce3757c47d8581d678ad130c1d56}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!testBinGPUCompaction@{testBinGPUCompaction}}
+\index{testBinGPUCompaction@{testBinGPUCompaction}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{testBinGPUCompaction()}{testBinGPUCompaction()}}
+{\footnotesize\ttfamily void test\+Bin\+GPUCompaction (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{input,  }\item[{float}]{threshold,  }\item[{int}]{k\+Bits,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{output }\end{DoxyParamCaption})}
+
+
+
+Convenience wrapper\+: complete bin pipeline, returns compacted output. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & Host-\/side input points. \\
+\hline
+{\em threshold} & Predicate threshold for is\+Hot. \\
+\hline
+{\em k\+Bits} & Number of low Morton bits used for the bin ID. \\
+\hline
+{\em output} & Host-\/side vector receiving compacted points. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_a456cdd2ebf1318a372af96f216e2f709}\label{stream__compaction__bin_8h_a456cdd2ebf1318a372af96f216e2f709}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!testBinGPUCompaction\_atomic@{testBinGPUCompaction\_atomic}}
+\index{testBinGPUCompaction\_atomic@{testBinGPUCompaction\_atomic}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{testBinGPUCompaction\_atomic()}{testBinGPUCompaction\_atomic()}}
+{\footnotesize\ttfamily void test\+Bin\+GPUCompaction\+\_\+atomic (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{input,  }\item[{float}]{threshold,  }\item[{int}]{k\+Bits,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{output,  }\item[{float \&}]{t\+\_\+kernel\+\_\+ms,  }\item[{float \&}]{t\+\_\+total\+\_\+ms }\end{DoxyParamCaption})}
+
+
+
+Single-\/pass atomic version for quick prototyping / fallback. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & Host-\/side input points. \\
+\hline
+{\em threshold} & Predicate threshold for is\+Hot. \\
+\hline
+{\em k\+Bits} & Number of low Morton bits (bins = 2$^\wedge$k\+Bits). \\
+\hline
+{\em output} & Host-\/side vector receiving compacted points. \\
+\hline
+{\em t\+\_\+kernel\+\_\+ms} & Returns kernel-\/only time (ms). \\
+\hline
+{\em t\+\_\+total\+\_\+ms} & Returns total GPU time incl. H2D / D2H (ms). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{stream__compaction__bin_8h_aebc92c903fd0ddb08cc5e13829c1c54f}\label{stream__compaction__bin_8h_aebc92c903fd0ddb08cc5e13829c1c54f}} 
+\index{stream\_compaction\_bin.h@{stream\_compaction\_bin.h}!testBinGPUCompaction\_partition@{testBinGPUCompaction\_partition}}
+\index{testBinGPUCompaction\_partition@{testBinGPUCompaction\_partition}!stream\_compaction\_bin.h@{stream\_compaction\_bin.h}}
+\doxysubsubsection{\texorpdfstring{testBinGPUCompaction\_partition()}{testBinGPUCompaction\_partition()}}
+{\footnotesize\ttfamily void test\+Bin\+GPUCompaction\+\_\+partition (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{input,  }\item[{float}]{threshold,  }\item[{int}]{k\+Bits,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structPoint2D}{Point2D}} $>$ \&}]{output,  }\item[{float \&}]{t\+\_\+kernel\+\_\+ms,  }\item[{float \&}]{t\+\_\+total\+\_\+ms,  }\item[{\mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}}}]{kernel\+Kind }\end{DoxyParamCaption})}
+
+
+
+Plan-\/A pipeline wrapper that lets the caller choose a \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}} variant. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & Host-\/side input points. \\
+\hline
+{\em threshold} & Predicate threshold for is\+Hot. \\
+\hline
+{\em k\+Bits} & Number of low Morton bits (bins = 2$^\wedge$k\+Bits). \\
+\hline
+{\em output} & Host-\/side vector receiving compacted points. \\
+\hline
+{\em t\+\_\+kernel\+\_\+ms} & Returns kernel-\/only time (ms). \\
+\hline
+{\em t\+\_\+total\+\_\+ms} & Returns total GPU time incl. H2D / D2H (ms). \\
+\hline
+{\em kernel\+Kind} & Kernel strategy to use (shared / warp / bitmask / auto). \\
+\hline
+\end{DoxyParams}

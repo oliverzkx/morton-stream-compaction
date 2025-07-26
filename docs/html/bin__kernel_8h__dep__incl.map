@@ -1,0 +1,5 @@
+<map id="include/bin_kernel.h" name="include/bin_kernel.h">
+<area shape="rect" id="node1" title="Enumeration of single&#45;bin stream&#45;compaction kernel variants." alt="" coords="153,5,305,32"/>
+<area shape="rect" id="node2" href="$stream__compaction_8h.html" title="Naïve, shared&#45;memory, warp&#45;shuffle, and bitmask variants of stream compaction for a single Morton&#45;cur..." alt="" coords="5,87,220,114"/>
+<area shape="rect" id="node3" href="$stream__compaction__bin_8h.html" title="Interfaces for Morton&#45;code, bin&#45;aware stream&#45;compaction." alt="" coords="245,80,447,121"/>
+</map>

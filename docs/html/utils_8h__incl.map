@@ -1,0 +1,8 @@
+<map id="include/utils.h" name="include/utils.h">
+<area shape="rect" id="node1" title="Helper routines for the Morton&#45;curve stream&#45;compaction project." alt="" coords="149,5,262,32"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,80,85,107"/>
+<area shape="rect" id="node3" title=" " alt="" coords="109,80,168,107"/>
+<area shape="rect" id="node4" title=" " alt="" coords="214,155,277,181"/>
+<area shape="rect" id="node5" title=" " alt="" coords="321,155,380,181"/>
+<area shape="rect" id="node6" href="$common_8h.html" title="Common data types, constants, and helper predicates used throughout the Morton&#45;curve stream&#45;compactio..." alt="" coords="243,80,333,107"/>
+</map>

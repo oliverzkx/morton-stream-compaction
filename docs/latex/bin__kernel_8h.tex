@@ -1,0 +1,76 @@
+\hypertarget{bin__kernel_8h}{}\doxysection{include/bin\+\_\+kernel.h File Reference}
+\label{bin__kernel_8h}\index{include/bin\_kernel.h@{include/bin\_kernel.h}}
+
+
+Enumeration of single-\/bin stream-\/compaction kernel variants.  
+
+
+This graph shows which files directly or indirectly include this file\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{bin__kernel_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}} \{ \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580aa6156ea9d66fef24e87e841fbabf7cca}{Shared}}
+, \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a54ebc873811258829eb04f0b52a9e1a0}{Warp}}
+, \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a087c8383b49aedf93f75a2a409d18acf}{Bitmask}}
+, \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a06b9281e396db002010bde1de57262eb}{Auto}}
+ \}
+\begin{DoxyCompactList}\small\item\em Available kernel strategies for single-\/bin compaction. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Enumeration of single-\/bin stream-\/compaction kernel variants. 
+
+This header defines an enumeration that lists every CUDA kernel implementation available for compacting points inside one bin. Each variant follows a different optimization strategy\+: • Shared – uses on-\/chip shared memory to minimise global accesses. ~\newline
+ • Warp – relies on warp-\/level primitives (e.\+g., ballot / prefix sum). ~\newline
+ • Bitmask – compacts with per-\/thread validity bits and prefix sums. ~\newline
+ • Auto – selects the best variant at runtime according to heuristics.
+
+The enum is consumed by higher-\/level code (e.\+g., stream\+\_\+compaction\+\_\+bin.\+cu) to dispatch the appropriate kernel based on user configuration or autotune results.
+
+\begin{DoxyAuthor}{Author}
+Kaixiang Zou 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+1.\+0 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2025-\/07-\/26 
+\end{DoxyDate}
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}\label{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}} 
+\index{bin\_kernel.h@{bin\_kernel.h}!BinKernel@{BinKernel}}
+\index{BinKernel@{BinKernel}!bin\_kernel.h@{bin\_kernel.h}}
+\doxysubsubsection{\texorpdfstring{BinKernel}{BinKernel}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580}{Bin\+Kernel}}\hspace{0.3cm}{\ttfamily [strong]}}
+
+
+
+Available kernel strategies for single-\/bin compaction. 
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Shared@{Shared}!bin\_kernel.h@{bin\_kernel.h}}\index{bin\_kernel.h@{bin\_kernel.h}!Shared@{Shared}}}\mbox{\Hypertarget{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580aa6156ea9d66fef24e87e841fbabf7cca}\label{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580aa6156ea9d66fef24e87e841fbabf7cca}} 
+Shared&Shared-\/memory implementation. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Warp@{Warp}!bin\_kernel.h@{bin\_kernel.h}}\index{bin\_kernel.h@{bin\_kernel.h}!Warp@{Warp}}}\mbox{\Hypertarget{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a54ebc873811258829eb04f0b52a9e1a0}\label{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a54ebc873811258829eb04f0b52a9e1a0}} 
+Warp&Warp-\/level (intrinsics-\/based) implementation. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Bitmask@{Bitmask}!bin\_kernel.h@{bin\_kernel.h}}\index{bin\_kernel.h@{bin\_kernel.h}!Bitmask@{Bitmask}}}\mbox{\Hypertarget{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a087c8383b49aedf93f75a2a409d18acf}\label{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a087c8383b49aedf93f75a2a409d18acf}} 
+Bitmask&Bitmask + prefix-\/sum implementation. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Auto@{Auto}!bin\_kernel.h@{bin\_kernel.h}}\index{bin\_kernel.h@{bin\_kernel.h}!Auto@{Auto}}}\mbox{\Hypertarget{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a06b9281e396db002010bde1de57262eb}\label{bin__kernel_8h_a9de01faefc8da7618251beeabcd27580a06b9281e396db002010bde1de57262eb}} 
+Auto&Runtime-\/selected best implementation. \\
+\hline
+
+\end{DoxyEnumFields}

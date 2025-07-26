@@ -1,18 +1,19 @@
 /**
  * @file benchmark_utils.cu
- * @brief Implementation of benchmark utility functions for stream compaction tests.
- *        This includes running GPU compaction kernels (currently bitmask version only)
- *        under different input sizes, thread block configurations, and precision modes.
- * 
- *        The benchmark outputs include execution time and (optionally) numerical error.
- *        Results are used for CSV output and further visualization.
- * 
- *        Note: Currently only float-precision kernels are supported. Double-precision
- *        versions will be implemented in future extensions.
- * 
- * @author Kaixiang Zou
- * @version 1.0
- * @date 2025-07-11
+ * @brief Benchmark utilities for Morton-curve stream-compaction kernels.
+ *
+ * The helpers here:
+ *   • Generate and sort synthetic point sets.
+ *   • Launch GPU compaction kernels (bitmask variant, float and double).
+ *   • Time kernel execution and compute size-based error vs. a CPU baseline.
+ *   • Provide lightweight visual comparison of the first few output elements.
+ *
+ * Only float precision is fully supported by every kernel; the double-precision
+ * path is included for completeness and future extensions.
+ *
+ * @author  Kaixiang Zou
+ * @version 1.1
+ * @date    2025-07-26
  */
 
 #include <iostream>
@@ -26,153 +27,177 @@
 #include "utils.h"
 #include "stream_compaction.h"
 
-/**
- * @brief Print the first few points from both GPU and CPU outputs for comparison.
- *
- * This function compares the first few elements of the GPU result and the CPU baseline.
- * It helps visually verify correctness when debugging numerical mismatches or unexpected results.
- *
- * @param gpu_output Vector containing GPU-compacted points (converted to float)
- * @param cpu_baseline Vector containing CPU-compacted points
- */
-void printPointsComparison(const std::vector<Point2D>& gpu, const std::vector<Point2D>& cpu) {
-    std::cout << "\n=== 🔵 Comparing first 5 points ===\n";
+// ────────────────────────────────────────────────────────────────
+// Utility helpers
+// ────────────────────────────────────────────────────────────────
 
-    // Sort both GPU and CPU output by Morton code to ensure consistent order
+/**
+ * @brief Compare the first few elements of GPU and CPU results.
+ *
+ * The two vectors are sorted by Morton code so that identical points
+ * appear in the same order before printing.
+ *
+ * @param gpu Vector containing GPU-compacted points.
+ * @param cpu Vector containing CPU-compacted points.
+ */
+void printPointsComparison(const std::vector<Point2D>& gpu,
+                           const std::vector<Point2D>& cpu)
+{
+    std::cout << "\n=== Comparing first 5 points ===\n";
+
+    // Make copies so we can sort without touching the originals
     std::vector<Point2D> sorted_gpu = gpu;
     std::vector<Point2D> sorted_cpu = cpu;
     std::sort(sorted_gpu.begin(), sorted_gpu.end(), compareMorton);
     std::sort(sorted_cpu.begin(), sorted_cpu.end(), compareMorton);
 
-    int count = std::min(5, std::min((int)sorted_gpu.size(), (int)sorted_cpu.size()));
-    for (int i = 0; i < count; ++i) {
+    const int count = std::min(5,
+                     std::min(static_cast<int>(sorted_gpu.size()),
+                              static_cast<int>(sorted_cpu.size())));
+
+    for (int i = 0; i < count; ++i)
+    {
+        // Print x, y, and temperature fields side-by-side
         const Point2D& g = sorted_gpu[i];
         const Point2D& c = sorted_cpu[i];
-        std::cout << "GPU[" << i << "]: (x=" << g.x << ", y=" << g.y << ", temp=" << g.temp << ")  |  ";
-        std::cout << "CPU[" << i << "]: (x=" << c.x << ", y=" << c.y << ", temp=" << c.temp << ")\n";
+        std::cout << "GPU[" << i << "]: (x=" << g.x << ", y=" << g.y
+                  << ", temp=" << g.temp << ")  |  "
+                  << "CPU[" << i << "]: (x=" << c.x << ", y=" << c.y
+                  << ", temp=" << c.temp << ")\n";
     }
 
     std::cout << "GPU output size = " << gpu.size()
-              << ", CPU baseline size = " << cpu.size() << "\n";
+              << ", CPU baseline size = " << cpu.size() << '\n';
 }
 
-
-bool compareMorton(const Point2D& a, const Point2D& b) {
-    return morton2D_encode((int)a.x, (int)a.y) < morton2D_encode((int)b.x, (int)b.y);
-}
-
-// -----------------------------------------------------------------------------
-//  runBitmaskBenchmark
-//  • size       : total number of points to generate            | 总点数
-//  • blockSize  : CUDA blockDim.x                               | CUDA 线程块大小
-//  • precision  : "float" or "double"                           | 精度选择
-//  • time_ms    : (out) measured GPU time in ms                 | 输出：GPU 计时
-//  • error      : (out) relative size diff to CPU baseline      | 输出：结果大小误差
-// -----------------------------------------------------------------------------
-void runBitmaskBenchmark(int size,
-                         int blockSize,
-                         const std::string& precision,
-                         float& time_ms,
-                         float& error)
+/**
+ * @brief Ordering predicate used to sort points by their Morton code.
+ */
+bool compareMorton(const Point2D& a, const Point2D& b)
 {
-    /* ------------------------------------------------------------ *
-     * 1. Generate & sort input points                              *
-     * ------------------------------------------------------------ */
-    int rows = std::sqrt(size);                         // English: derive grid dims
-    int cols = (size + rows - 1) / rows;                // 中文：根据 size 生成近似方阵
+    return morton2D_encode(static_cast<unsigned int>(a.x),
+                           static_cast<unsigned int>(a.y))
+         < morton2D_encode(static_cast<unsigned int>(b.x),
+                           static_cast<unsigned int>(b.y));
+}
 
-    std::vector<Point2D> input =
-        generatePoints(rows, cols, 1.0f, 42);           // English: fixed seed
-                                                        // 中文：固定随机种子
-    if ((int)input.size() > size) input.resize(size);   // Trim to exact size | 截断到精确大小
+// ────────────────────────────────────────────────────────────────
+// Benchmark driver
+// ────────────────────────────────────────────────────────────────
 
-    std::vector<Point2D> input_sorted = input;          // Clone for Morton sort | 克隆一份再排序
+/**
+ * @brief Run the bitmask compaction kernel and report timing & error.
+ *
+ * @param size       Total number of points to generate.
+ * @param blockSize  CUDA thread-block dimension (x).
+ * @param precision  `"float"` or `"double"`.
+ * @param time_ms    [out] Measured GPU execution time in milliseconds.
+ * @param error      [out] Relative size error compared with CPU baseline.
+ */
+void runBitmaskBenchmark(int               size,
+                         int               blockSize,
+                         const std::string& precision,
+                         float&            time_ms,
+                         float&            error)
+{
+    /* ----------------------------------------------------------------
+     * 1. Generate a roughly square grid of randomised points.
+     * ---------------------------------------------------------------- */
+    const int rows = static_cast<int>(std::sqrt(size));
+    const int cols = (size + rows - 1) / rows;
+
+    std::vector<Point2D> input = generatePoints(rows, cols, 1.0f, 42);
+    if (static_cast<int>(input.size()) > size)
+        input.resize(size);                 // Trim to exact count
+
+    // Sort by Morton code for better locality (matches GPU access)
+    std::vector<Point2D> input_sorted = input;
     std::sort(input_sorted.begin(), input_sorted.end(), compareMorton);
 
-    /* ------------------------------------------------------------ *
-     * 2. Set threshold                                             *
-     * ------------------------------------------------------------ */
+    /* ----------------------------------------------------------------
+     * 2. Prepare thresholds and result containers.
+     * ---------------------------------------------------------------- */
     constexpr float  threshold_f = 25.0f;
-    constexpr double threshold_d = 25;
+    constexpr double threshold_d = 25.0;
 
-    std::vector<Point2D>        cpu_baseline;           // CPU reference | CPU 参考结果
-    std::vector<Point2D>        output_f;               // GPU float out | GPU float 结果
-    std::vector<Point2D_double> output_d_raw;           // GPU double raw| GPU double 原始结果
-    std::vector<Point2D>        output_d;               // converted back | 转回 float 便于对比
+    std::vector<Point2D>        cpu_baseline;  // Reference
+    std::vector<Point2D>        output_f;      // GPU float result
+    std::vector<Point2D_double> output_d_raw;  // GPU double (raw)
+    std::vector<Point2D>        output_d;      // GPU double → float
 
-    /* ------------------------------------------------------------ *
-     * 3-A. FLOAT path                                              *
-     * ------------------------------------------------------------ */
+    /* ----------------------------------------------------------------
+     * 3-A. Float-precision path
+     * ---------------------------------------------------------------- */
     if (precision == "float")
     {
-        bitmask_stream_compaction_gpu_float(
-            input_sorted, threshold_f, blockSize,
-            time_ms, output_f);                         // GPU float compaction | GPU float 压缩
+        // Launch GPU bitmask pipeline (float)
+        bitmask_stream_compaction_gpu_float(input_sorted,
+                                            threshold_f,
+                                            blockSize,
+                                            time_ms,
+                                            output_f);
 
-        cpu_baseline = compact_stream_cpu(
-            input_sorted, threshold_f);                 // CPU baseline | CPU 基准
+        // CPU baseline for comparison
+        cpu_baseline = compact_stream_cpu(input_sorted, threshold_f);
 
-        int diff = std::abs((int)output_f.size() -
-                            (int)cpu_baseline.size());
+        // Compute relative size error
+        const int diff = std::abs(static_cast<int>(output_f.size()) -
+                                  static_cast<int>(cpu_baseline.size()));
         error = cpu_baseline.empty() ? 0.0f
                                      : static_cast<float>(diff) /
-                                       cpu_baseline.size();
+                                       static_cast<float>(cpu_baseline.size());
 
-        printPointsComparison(output_f, cpu_baseline);  // Compare top-5 | 对比前 5 个
+        printPointsComparison(output_f, cpu_baseline);
         return;
     }
 
-    /* ------------------------------------------------------------ *
-     * 3-B. DOUBLE path                                             *
-     * ------------------------------------------------------------ */
+    /* ----------------------------------------------------------------
+     * 3-B. Double-precision path
+     * ---------------------------------------------------------------- */
 
-    // 3-B-1.  Point2D → Point2D_double  (fill ALL fields)
-    //        英文：convert & copy all 5 members
-    //        中文：转换并完整填充 5 个成员
+    // Convert Point2D → Point2D_double
     std::vector<Point2D_double> input_double;
     input_double.reserve(input_sorted.size());
-
     for (const auto& pt : input_sorted)
     {
         input_double.push_back(Point2D_double{
-            .x    = static_cast<double>(pt.x),
-            .y    = static_cast<double>(pt.y),
-            .vx   = static_cast<double>(pt.vx),
-            .vy   = static_cast<double>(pt.vy),
-            .temp = static_cast<double>(pt.temp)
+            static_cast<double>(pt.x),
+            static_cast<double>(pt.y),
+            static_cast<double>(pt.vx),
+            static_cast<double>(pt.vy),
+            static_cast<double>(pt.temp)
         });
     }
 
-    // 3-B-2. GPU double compaction
-    bitmask_stream_compaction_gpu_double(
-        input_double, threshold_d, blockSize,
-        time_ms, output_d_raw);
+    // Launch GPU bitmask pipeline (double)
+    bitmask_stream_compaction_gpu_double(input_double,
+                                         threshold_d,
+                                         blockSize,
+                                         time_ms,
+                                         output_d_raw);
 
-    // 3-B-3. Convert GPU result back to Point2D for easy diff
+    // Convert results back to float for an apples-to-apples size check
     output_d.reserve(output_d_raw.size());
     for (const auto& pt : output_d_raw)
     {
         output_d.push_back(Point2D{
-            .x    = static_cast<float>(pt.x),
-            .y    = static_cast<float>(pt.y),
-            .vx   = static_cast<float>(pt.vx),
-            .vy   = static_cast<float>(pt.vy),
-            .temp = static_cast<float>(pt.temp)
+            static_cast<float>(pt.x),
+            static_cast<float>(pt.y),
+            static_cast<float>(pt.vx),
+            static_cast<float>(pt.vy),
+            static_cast<float>(pt.temp)
         });
     }
 
-    // 3-B-4. CPU baseline (still float threshold is OK)
-    cpu_baseline = compact_stream_cpu(
-        input_sorted, threshold_d);
+    // CPU baseline
+    cpu_baseline = compact_stream_cpu(input_sorted, threshold_d);
 
-    int diff = std::abs((int)output_d.size() -
-                        (int)cpu_baseline.size());
+    // Size error
+    const int diff = std::abs(static_cast<int>(output_d.size()) -
+                              static_cast<int>(cpu_baseline.size()));
     error = cpu_baseline.empty() ? 0.0f
                                  : static_cast<float>(diff) /
-                                   cpu_baseline.size();
+                                   static_cast<float>(cpu_baseline.size());
 
-    printPointsComparison(output_d, cpu_baseline);      // Top-5 diff | 打印前 5 个
+    printPointsComparison(output_d, cpu_baseline);
 }
-
-
-
