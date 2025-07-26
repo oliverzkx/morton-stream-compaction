@@ -1,10 +1,10 @@
 /**
  * @file main.cu
- * @brief Morton stream-compaction demo with multiple GPU variants.
- *        Supports:
- *          • naive  : whole-array GPU compaction
- *          • bin-atomic     (Plan-B)
- *          • bin-partition  (Plan-A, histogram→scan→scatter)
+ * @brief Morton stream-compaction demo with multiple GPU variants.   // 英文
+ *        支持多种 GPU 变体的 Morton 压缩演示                         // 中文
+ *          • naive         : whole-array GPU compaction
+ *          • bin-atomic    : Plan-B (one-pass atomics)
+ *          • bin-partition : Plan-A (histogram → scan → scatter)
  */
 
 #include <cuda_runtime.h>
@@ -17,11 +17,12 @@
 
 #include "common.h"
 #include "utils.h"
-#include "stream_compaction.h"
-#include "stream_compaction_bin.h"
+#include "stream_compaction.h"      // kernels & BinKernel enum      // 英文
+#include "stream_compaction_bin.h"  // Plan-A / Plan-B wrappers      // 中文
+#include "bin_kernel.h"
 
 /* ============================================================
-   Runtime configuration
+   Runtime configuration                                       // 运行时参数结构
    ============================================================*/
 struct CmdCfg {
     int  numPoints  = 100;
@@ -32,8 +33,11 @@ struct CmdCfg {
     int  maxPrint   = 10;
     int  kBits      = 8;
 
-    enum class Mode    { Naive, Bin }      mode    = Mode::Naive;
-    enum class Variant { Atomic, Partition } variant = Variant::Atomic; // NEW
+    enum class Mode    { Naive, Bin }      mode    = Mode::Naive;           // 英
+    enum class Variant { Atomic, Partition } variant = Variant::Atomic;     // 中
+    /* NEW – per-bin kernel choice */                                        // 英
+    /* 新增 – 逐 bin kernel 选择 */                                          // 中
+    BinKernel kernelKind = BinKernel::Shared;
 };
 
 /* ============================================================*/
@@ -47,19 +51,28 @@ int main(int argc, char* argv[])
     if (!cfgOpt) return 0;
     CmdCfg cfg = *cfgOpt;
 
+    /* ---------- print settings ---------- */
     std::cout << "✅ Morton stream-compaction demo\n";
     std::cout << "🧭 Settings → N=" << cfg.numPoints
               << ", seed=" << (cfg.randomSeed ? "random" : "fixed")
               << ", mode=" << (cfg.mode == CmdCfg::Mode::Naive ? "naive" : "bin")
               << ", variant=" << (cfg.variant == CmdCfg::Variant::Atomic ?
                                   "atomic" : "partition")
+              << ", kernel=" << ([&]{
+                     switch(cfg.kernelKind){
+                       case BinKernel::Shared:  return "shared";
+                       case BinKernel::Warp:    return "warp";
+                       case BinKernel::Bitmask: return "bitmask";
+                       case BinKernel::Auto:    return "auto";
+                     } return "??";
+                 })()
               << ", k="   << cfg.kBits
               << ", CPU=" << (cfg.runCPU ? "on" : "off")
               << ", GPU=" << (cfg.runGPU ? "on" : "off") << '\n';
 
     if (cfg.runGPU && chooseCudaCard(true) == 0) return -1;
 
-    /* ---------- generate & sort -------- */
+    /* ---------- generate & sort ---------- */
     int rows = static_cast<int>(std::sqrt(cfg.numPoints));
     int cols = (cfg.numPoints + rows - 1) / rows;
     auto points = generatePoints(rows, cols, cfg.randomSeed ? -1.f : 1.f);
@@ -69,7 +82,7 @@ int main(int argc, char* argv[])
     sort_by_morton(points);
     printPointList(points, "🌀 Points After Morton Sorting", cfg.maxPrint);
 
-    constexpr float THRESHOLD = 30.f;
+    constexpr float THRESHOLD = 30.f;      // filter threshold    // 过滤阈值
 
     /* ---------- CPU reference ---------- */
     if (cfg.runCPU) {
@@ -102,14 +115,27 @@ int main(int argc, char* argv[])
             } else {        /* Partition (Plan-A) */
                 testBinGPUCompaction_partition(points, THRESHOLD,
                                                cfg.kBits, gpu_out,
-                                               tKer, tTot);
-                std::cout << "👉 Bin GPU(k=" << cfg.kBits << ") [partition] : "
-                          << gpu_out.size() << " pts, kernel "
+                                               tKer, tTot,
+                                               cfg.kernelKind);   // NEW param
+                std::cout << "👉 Bin GPU(k=" << cfg.kBits << ") [partition/"
+                          << ([&]{
+                                 switch(cfg.kernelKind){
+                                   case BinKernel::Shared:  return "shared";
+                                   case BinKernel::Warp:    return "warp";
+                                   case BinKernel::Bitmask: return "bitmask";
+                                   case BinKernel::Auto:    return "auto";
+                                 } return "??";
+                             })()
+                          << "] : " << gpu_out.size() << " pts, kernel "
                           << tKer << " ms, total " << tTot << " ms\n";
             }
         }
         printPointList(gpu_out, "✅ Bin GPU Compacted", cfg.maxPrint);
     }
+
+    cudaDeviceSynchronize();
+    cudaDeviceReset();
+    
     return 0;
 }
 
@@ -132,6 +158,8 @@ std::optional<CmdCfg> parseArgs(int argc, char* argv[])
         else if (arg == "-c")     { cfg.runCPU = true;  cfg.runGPU = false; }
         else if (arg == "-g")     { cfg.runCPU = false; cfg.runGPU = true;  }
         else if (arg == "-k")     nextInt(cfg.kBits, i, argv);
+
+        /* ------ mode & variant ----- */
         else if (arg == "--mode") {
             if (++i >= argc) { std::cerr << "Missing value after --mode\n"; exit(1); }
             std::string_view m{argv[i]};
@@ -146,6 +174,18 @@ std::optional<CmdCfg> parseArgs(int argc, char* argv[])
             else if (v == "partition")  cfg.variant = CmdCfg::Variant::Partition;
             else { std::cerr << "Unknown variant " << v << '\n'; exit(1); }
         }
+
+        /* ------ NEW: kernel choice ----- */
+        else if (arg == "--kernel") {
+            if (++i >= argc) { std::cerr << "Missing value after --kernel\n"; exit(1); }
+            std::string_view k{argv[i]};
+            if      (k == "shared")  cfg.kernelKind = BinKernel::Shared;
+            else if (k == "warp")    cfg.kernelKind = BinKernel::Warp;
+            else if (k == "bitmask") cfg.kernelKind = BinKernel::Bitmask;
+            else if (k == "auto")    cfg.kernelKind = BinKernel::Auto;
+            else { std::cerr << "Unknown kernel " << k << '\n'; exit(1); }
+        }
+
         else if (arg == "-h" || arg == "--help") { printUsage(); return std::nullopt; }
         else { std::cerr << "[❌] Unknown argument: " << arg << '\n'; printUsage(); exit(1); }
     }
@@ -157,16 +197,25 @@ void printUsage()
     std::cout << R"(
     ============================================================
     Stream-Compaction with Morton Encoding
-    Options:
-    -n <int>        Number of points           (default 100)
-    -r              Use random seed
-    -t              Show timing (kernel/total)
-    -c              CPU only
-    -g              GPU only
-    --mode <str>    naive | bin               (default naive)
-    --variant <str> atomic | partition        (default atomic, bin mode only)
-    -k   <int>      k bits for bin ID         (default 8)
-    -h, --help      Show this help
+    Options  选项:
+      -n <int>        Number of points              (default 100)
+                      点数量                        （默认 100）
+      -r              Use random seed
+                      使用随机种子
+      -t              Show timing (kernel/total)
+                      显示计时（kernel / total）
+      -c              CPU only
+      -g              GPU only
+      --mode <str>    naive | bin                  (default naive)
+                      运行模式                     （默认 naive）
+      --variant <str> atomic | partition           (bin mode only)
+                      bin 模式下的实现变体         （默认 atomic）
+      --kernel <str>  shared | warp | bitmask | auto  (partition only)
+                      逐 bin 内核类型              （partition 模式专用）
+      -k   <int>      k bits for bin ID            (default 8)
+                      bin ID 低位 k               （默认 8）
+      -h, --help      Show this help
+                      显示帮助
     ============================================================
     )" << std::endl;
 }

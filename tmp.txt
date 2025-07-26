@@ -1,0 +1,604 @@
+dram__throughput.avg.pct_of_peak_sustained_active                           Throughput      %               DRAM throughput (This throughput metric represents the percent of the 
+dram__throughput.avg.pct_of_peak_sustained_elapsed                          Throughput      %               DRAM throughput (This throughput metric represents the percent of the 
+dram__throughput.avg.pct_of_peak_sustained_frame                            Throughput      %               DRAM throughput                                                       
+dram__throughput.avg.pct_of_peak_sustained_region                           Throughput      %               DRAM throughput                                                       
+dram__throughput.max.pct_of_peak_sustained_active                           Throughput      %               DRAM throughput (This throughput metric represents the percent of the 
+dram__throughput.max.pct_of_peak_sustained_elapsed                          Throughput      %               DRAM throughput (This throughput metric represents the percent of the 
+dram__throughput.max.pct_of_peak_sustained_frame                            Throughput      %               DRAM throughput                                                       
+dram__throughput.max.pct_of_peak_sustained_region                           Throughput      %               DRAM throughput                                                       
+dram__throughput.min.pct_of_peak_sustained_active                           Throughput      %               DRAM throughput (This throughput metric represents the percent of the 
+dram__throughput.min.pct_of_peak_sustained_elapsed                          Throughput      %               DRAM throughput (This throughput metric represents the percent of the 
+dram__throughput.min.pct_of_peak_sustained_frame                            Throughput      %               DRAM throughput                                                       
+dram__throughput.min.pct_of_peak_sustained_region                           Throughput      %               DRAM throughput                                                       
+dram__throughput.sum.pct_of_peak_sustained_active                           Throughput      %               DRAM throughput (This throughput metric represents the percent of the 
+dram__throughput.sum.pct_of_peak_sustained_elapsed                          Throughput      %               DRAM throughput (This throughput metric represents the percent of the 
+dram__throughput.sum.pct_of_peak_sustained_frame                            Throughput      %               DRAM throughput                                                       
+dram__throughput.sum.pct_of_peak_sustained_region                           Throughput      %               DRAM throughput                                                       
+lts__t_sector_op_read_hit_rate.max_rate                                                Ratio                           # of sector hits for _op_read per sector access for _op_read (This    
+lts__t_sector_op_read_hit_rate.pct                                                     Ratio           %               # of sector hits for _op_read per sector access for _op_read (This    
+lts__t_sector_op_read_hit_rate.ratio                                                   Ratio                           # of sector hits for _op_read per sector access for _op_read (This    
+lts__t_sector_op_write_hit_rate.max_rate                                               Ratio                           # of sector hits for _op_write per sector access for _op_write (This  
+lts__t_sector_op_write_hit_rate.pct                                                    Ratio           %               # of sector hits for _op_write per sector access for _op_write (This  
+lts__t_sector_op_write_hit_rate.ratio                                                  Ratio                           # of sector hits for _op_write per sector access for _op_write (This  
+sm__average_threads_launched_per_warp.pct                                    Ratio           %               # of threads launched per warp (This ratio metric represents the      
+sm__average_threads_launched_per_warp_shader_cs.pct                          Ratio           %               average # of CS threads launched per CS warp (This ratio metric       
+sm__warps_active.avg.pct_of_peak_sustained_active                           Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active.avg.pct_of_peak_sustained_elapsed                          Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active.avg.pct_of_peak_sustained_frame                            Counter         %               cumulative # of warps in flight                                       
+sm__warps_active.avg.pct_of_peak_sustained_region                           Counter         %               cumulative # of warps in flight                                       
+sm__warps_active.max.pct_of_peak_sustained_active                           Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active.max.pct_of_peak_sustained_elapsed                          Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active.max.pct_of_peak_sustained_frame                            Counter         %               cumulative # of warps in flight                                       
+sm__warps_active.max.pct_of_peak_sustained_region                           Counter         %               cumulative # of warps in flight                                       
+sm__warps_active.min.pct_of_peak_sustained_active                           Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active.min.pct_of_peak_sustained_elapsed                          Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active.min.pct_of_peak_sustained_frame                            Counter         %               cumulative # of warps in flight                                       
+sm__warps_active.min.pct_of_peak_sustained_region                           Counter         %               cumulative # of warps in flight                                       
+sm__warps_active.sum.pct_of_peak_sustained_active                           Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active.sum.pct_of_peak_sustained_elapsed                          Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active.sum.pct_of_peak_sustained_frame                            Counter         %               cumulative # of warps in flight                                       
+sm__warps_active.sum.pct_of_peak_sustained_region                           Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_realtime.avg.pct_of_peak_sustained_active                  Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active_realtime.avg.pct_of_peak_sustained_elapsed                 Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active_realtime.avg.pct_of_peak_sustained_frame                   Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_realtime.avg.pct_of_peak_sustained_region                  Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_realtime.max.pct_of_peak_sustained_active                  Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active_realtime.max.pct_of_peak_sustained_elapsed                 Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active_realtime.max.pct_of_peak_sustained_frame                   Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_realtime.max.pct_of_peak_sustained_region                  Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_realtime.min.pct_of_peak_sustained_active                  Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active_realtime.min.pct_of_peak_sustained_elapsed                 Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active_realtime.min.pct_of_peak_sustained_frame                   Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_realtime.min.pct_of_peak_sustained_region                  Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_realtime.sum.pct_of_peak_sustained_active                  Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active_realtime.sum.pct_of_peak_sustained_elapsed                 Counter         %               cumulative # of warps in flight (This counter metric represents the   
+sm__warps_active_realtime.sum.pct_of_peak_sustained_frame                   Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_realtime.sum.pct_of_peak_sustained_region                  Counter         %               cumulative # of warps in flight                                       
+sm__warps_active_shader_cs.avg.pct_of_peak_sustained_active                 Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs.avg.pct_of_peak_sustained_elapsed                Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs.avg.pct_of_peak_sustained_frame                  Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs.avg.pct_of_peak_sustained_region                 Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs.max.pct_of_peak_sustained_active                 Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs.max.pct_of_peak_sustained_elapsed                Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs.max.pct_of_peak_sustained_frame                  Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs.max.pct_of_peak_sustained_region                 Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs.min.pct_of_peak_sustained_active                 Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs.min.pct_of_peak_sustained_elapsed                Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs.min.pct_of_peak_sustained_frame                  Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs.min.pct_of_peak_sustained_region                 Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs.sum.pct_of_peak_sustained_active                 Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs.sum.pct_of_peak_sustained_elapsed                Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs.sum.pct_of_peak_sustained_frame                  Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs.sum.pct_of_peak_sustained_region                 Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs_realtime.avg.pct_of_peak_sustained_active        Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs_realtime.avg.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs_realtime.avg.pct_of_peak_sustained_frame         Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs_realtime.avg.pct_of_peak_sustained_region        Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs_realtime.max.pct_of_peak_sustained_active        Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs_realtime.max.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs_realtime.max.pct_of_peak_sustained_frame         Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs_realtime.max.pct_of_peak_sustained_region        Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs_realtime.min.pct_of_peak_sustained_active        Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs_realtime.min.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs_realtime.min.pct_of_peak_sustained_frame         Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs_realtime.min.pct_of_peak_sustained_region        Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs_realtime.sum.pct_of_peak_sustained_active        Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs_realtime.sum.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of active CS warps (This counter metric represents the   
+sm__warps_active_shader_cs_realtime.sum.pct_of_peak_sustained_frame         Counter         %               cumulative # of active CS warps                                       
+sm__warps_active_shader_cs_realtime.sum.pct_of_peak_sustained_region        Counter         %               cumulative # of active CS warps                                       
+sm__warps_launched.avg.pct_of_peak_sustained_active                         Counter         %               # of warps launched (This counter metric represents the avg percent   
+sm__warps_launched.avg.pct_of_peak_sustained_elapsed                        Counter         %               # of warps launched (This counter metric represents the avg percent   
+sm__warps_launched.avg.pct_of_peak_sustained_frame                          Counter         %               # of warps launched                                                   
+sm__warps_launched.avg.pct_of_peak_sustained_region                         Counter         %               # of warps launched                                                   
+sm__warps_launched.max.pct_of_peak_sustained_active                         Counter         %               # of warps launched (This counter metric represents the max percent   
+sm__warps_launched.max.pct_of_peak_sustained_elapsed                        Counter         %               # of warps launched (This counter metric represents the max percent   
+sm__warps_launched.max.pct_of_peak_sustained_frame                          Counter         %               # of warps launched                                                   
+sm__warps_launched.max.pct_of_peak_sustained_region                         Counter         %               # of warps launched                                                   
+sm__warps_launched.min.pct_of_peak_sustained_active                         Counter         %               # of warps launched (This counter metric represents the min percent   
+sm__warps_launched.min.pct_of_peak_sustained_elapsed                        Counter         %               # of warps launched (This counter metric represents the min percent   
+sm__warps_launched.min.pct_of_peak_sustained_frame                          Counter         %               # of warps launched                                                   
+sm__warps_launched.min.pct_of_peak_sustained_region                         Counter         %               # of warps launched                                                   
+sm__warps_launched.sum.pct_of_peak_sustained_active                         Counter         %               # of warps launched (This counter metric represents the sum percent   
+sm__warps_launched.sum.pct_of_peak_sustained_elapsed                        Counter         %               # of warps launched (This counter metric represents the sum percent   
+sm__warps_launched.sum.pct_of_peak_sustained_frame                          Counter         %               # of warps launched                                                   
+sm__warps_launched.sum.pct_of_peak_sustained_region                         Counter         %               # of warps launched                                                   
+sm__warps_launched_shader_cs.avg.pct_of_peak_sustained_active               Counter         %               # of warps launched for CS (This counter metric represents the avg    
+sm__warps_launched_shader_cs.avg.pct_of_peak_sustained_elapsed              Counter         %               # of warps launched for CS (This counter metric represents the avg    
+sm__warps_launched_shader_cs.avg.pct_of_peak_sustained_frame                Counter         %               # of warps launched for CS                                            
+sm__warps_launched_shader_cs.avg.pct_of_peak_sustained_region               Counter         %               # of warps launched for CS                                            
+sm__warps_launched_shader_cs.max.pct_of_peak_sustained_active               Counter         %               # of warps launched for CS (This counter metric represents the max    
+sm__warps_launched_shader_cs.max.pct_of_peak_sustained_elapsed              Counter         %               # of warps launched for CS (This counter metric represents the max    
+sm__warps_launched_shader_cs.max.pct_of_peak_sustained_frame                Counter         %               # of warps launched for CS                                            
+sm__warps_launched_shader_cs.max.pct_of_peak_sustained_region               Counter         %               # of warps launched for CS                                            
+sm__warps_launched_shader_cs.min.pct_of_peak_sustained_active               Counter         %               # of warps launched for CS (This counter metric represents the min    
+sm__warps_launched_shader_cs.min.pct_of_peak_sustained_elapsed              Counter         %               # of warps launched for CS (This counter metric represents the min    
+sm__warps_launched_shader_cs.min.pct_of_peak_sustained_frame                Counter         %               # of warps launched for CS                                            
+sm__warps_launched_shader_cs.min.pct_of_peak_sustained_region               Counter         %               # of warps launched for CS                                            
+sm__warps_launched_shader_cs.sum.pct_of_peak_sustained_active               Counter         %               # of warps launched for CS (This counter metric represents the sum    
+sm__warps_launched_shader_cs.sum.pct_of_peak_sustained_elapsed              Counter         %               # of warps launched for CS (This counter metric represents the sum    
+sm__warps_launched_shader_cs.sum.pct_of_peak_sustained_frame                Counter         %               # of warps launched for CS                                            
+sm__warps_launched_shader_cs.sum.pct_of_peak_sustained_region               Counter         %               # of warps launched for CS                                            
+smsp__amortized_warp_latency.pct                                            Ratio           %               amortized warp duration (cycles) (This ratio metric represents the    
+smsp__average_inst_executed_per_warp.pct                                    Ratio           %               average # of instructions executed per warp (This ratio metric        
+smsp__average_inst_executed_pipe_alu_per_warp.pct                           Ratio           %               average # of instructions executed by pipe alu per warp (This ratio   
+smsp__average_inst_executed_pipe_cbu_per_warp.pct                           Ratio           %               average # of instructions executed by pipe cbu per warp (This ratio   
+smsp__average_inst_executed_pipe_fma_per_warp.pct                           Ratio           %               average # of instructions executed by pipe fma per warp (This ratio   
+smsp__average_inst_executed_pipe_fma_type_fp16_per_warp.pct                  Ratio           %               average # of instructions executed by pipe fma_type_fp16 per warp     
+smsp__average_inst_executed_pipe_fmaheavy_per_warp.pct                       Ratio           %               average # of instructions executed by pipe fmaheavy per warp (This    
+smsp__average_inst_executed_pipe_fmalite_per_warp.pct                        Ratio           %               average # of instructions executed by pipe fmalite per warp (This     
+smsp__average_inst_executed_pipe_fp64_op_dmma_per_warp.pct                   Ratio           %               average # of instructions executed by pipe fp64_op_dmma per warp      
+smsp__average_inst_executed_pipe_fp64_op_fp64_per_warp.pct                   Ratio           %               average # of instructions executed by pipe fp64_op_fp64 per warp      
+smsp__average_inst_executed_pipe_fp64_per_warp.pct                           Ratio           %               average # of instructions executed by pipe fp64 per warp (This ratio  
+smsp__average_inst_executed_pipe_ipa_per_warp.pct                            Ratio           %               average # of instructions executed by pipe ipa per warp (This ratio   
+smsp__average_inst_executed_pipe_lsu_per_warp.pct                            Ratio           %               average # of instructions executed by pipe lsu per warp (This ratio   
+smsp__average_inst_executed_pipe_tensor_op_hmma_per_warp.pct                 Ratio           %               average # of instructions executed by pipe tensor_op_hmma per warp    
+smsp__average_inst_executed_pipe_tensor_op_imma_per_warp.pct                 Ratio           %               average # of instructions executed by pipe tensor_op_imma per warp    
+smsp__average_inst_executed_pipe_tex_per_warp.pct                            Ratio           %               average # of instructions executed by pipe tex per warp (This ratio   
+smsp__average_inst_executed_pipe_uniform_per_warp.pct                        Ratio           %               average # of instructions executed by pipe uniform per warp (This     
+smsp__average_inst_executed_pipe_xu_per_warp.pct                             Ratio           %               average # of instructions executed by pipe xu per warp (This ratio    
+smsp__average_threads_launched_per_warp.pct                                  Ratio           %               average # of threads launched per warp (This ratio metric represents  
+smsp__average_warp_latency.pct                                               Ratio           %               average warp duration (cycles) (This ratio metric represents the      
+smsp__average_warp_latency_issue_stalled_barrier.pct                         Ratio           %               average # of warp cycles spent waiting for sibling warps at a CTA     
+smsp__average_warp_latency_issue_stalled_branch_resolving.pct                Ratio           %               average # of warp cycles spent waiting for a branch target address to 
+smsp__average_warp_latency_issue_stalled_dispatch_stall.pct                  Ratio           %               average # of warp cycles spent waiting on a dispatch stall (This      
+smsp__average_warp_latency_issue_stalled_drain.pct                           Ratio           %               average # of warp cycles spent waiting after EXIT for all memory      
+smsp__average_warp_latency_issue_stalled_imc_miss.pct                        Ratio           %               average # of warp cycles spent waiting for an immediate constant      
+smsp__average_warp_latency_issue_stalled_lg_throttle.pct                     Ratio           %               average # of warp cycles spent waiting for a free entry in the LSU    
+smsp__average_warp_latency_issue_stalled_long_scoreboard.pct                 Ratio           %               average # of warp cycles spent waiting for a scoreboard dependency on 
+smsp__average_warp_latency_issue_stalled_long_scoreboard_pipe_l1tex.pct      Ratio           %               average # of warp cycles spent waiting for a scoreboard dependency on 
+smsp__average_warp_latency_issue_stalled_math_pipe_throttle.pct              Ratio           %               average # of warp cycles spent waiting for an execution pipe to be    
+smsp__average_warp_latency_issue_stalled_membar.pct                          Ratio           %               average # of warp cycles spent waiting on a memory barrier (This      
+smsp__average_warp_latency_issue_stalled_mio_throttle.pct                    Ratio           %               average # of warp cycles spent waiting for a free entry in the MIO    
+smsp__average_warp_latency_issue_stalled_mio_throttle_pipe_mio.pct           Ratio           %               average # of warp cycles spent waiting for a free entry in the        
+smsp__average_warp_latency_issue_stalled_misc.pct                            Ratio           %               average # of warp cycles spent waiting on a miscellaneous hardware    
+smsp__average_warp_latency_issue_stalled_no_instruction.pct                  Ratio           %               average # of warp cycles spent waiting to be selected for instruction 
+smsp__average_warp_latency_issue_stalled_not_selected.pct                    Ratio           %               average # of warp cycles spent waiting for the microscheduler to      
+smsp__average_warp_latency_issue_stalled_selected.pct                        Ratio           %               average # of warp cycles spent selected by the microscheduler to      
+smsp__average_warp_latency_issue_stalled_short_scoreboard.pct                Ratio           %               average # of warp cycles spent waiting for a scoreboard dependency on 
+smsp__average_warp_latency_issue_stalled_sleeping.pct                        Ratio           %               average # of warp cycles spent waiting for a nanosleep to expire      
+smsp__average_warp_latency_issue_stalled_tex_throttle.pct                              Ratio           %               average # of warp cycles spent waiting for a free entry in the TEX    
+smsp__average_warp_latency_issue_stalled_wait.pct                                      Ratio           %               average # of warp cycles spent waiting on a fixed latency execution   
+smsp__average_warp_latency_per_inst_executed.pct                                       Ratio           %               average # of cycles each warp was resident per instruction executed   
+smsp__average_warp_latency_per_inst_issued.pct                                         Ratio           %               average # of cycles each warp was resident per instruction issued     
+smsp__average_warps_active_per_inst_executed.pct                                       Ratio           %               average # of cycles each warp was resident per instruction executed   
+smsp__average_warps_active_per_issue_active.pct                                        Ratio           %               average # of warps resident per issue cycle (This ratio metric        
+smsp__average_warps_issue_stalled_barrier_per_issue_active.pct                         Ratio           %               average # of warps resident per issue cycle, waiting for sibling      
+smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.pct                Ratio           %               average # of warps resident per issue cycle, waiting for a branch     
+smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.pct                  Ratio           %               average # of warps resident per issue cycle, waiting on a dispatch    
+smsp__average_warps_issue_stalled_drain_per_issue_active.pct                           Ratio           %               average # of warps resident per issue cycle, waiting after EXIT for   
+smsp__average_warps_issue_stalled_imc_miss_per_issue_active.pct                        Ratio           %               average # of warps resident per issue cycle, waiting for an immediate 
+smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.pct                     Ratio           %               average # of warps resident per issue cycle, waiting for a free entry 
+smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.pct                 Ratio           %               average # of warps resident per issue cycle, waiting for a scoreboard 
+smsp__average_warps_issue_stalled_long_scoreboard_pipe_l1tex_per_issue_active.pct      Ratio           %               average # of warps resident per issue cycle, waiting for a scoreboard 
+smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.pct              Ratio           %               average # of warps resident per issue cycle, waiting for an execution 
+smsp__average_warps_issue_stalled_membar_per_issue_active.pct                          Ratio           %               average # of warps resident per issue cycle, waiting on a memory      
+smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.pct                    Ratio           %               average # of warps resident per issue cycle, waiting for a free entry 
+smsp__average_warps_issue_stalled_mio_throttle_pipe_mio_per_issue_active.pct           Ratio           %               average # of warps resident per issue cycle, waiting for a free entry 
+smsp__average_warps_issue_stalled_misc_per_issue_active.pct                            Ratio           %               average # of warps resident per issue cycle, waiting on a             
+smsp__average_warps_issue_stalled_no_instruction_per_issue_active.pct                  Ratio           %               average # of warps resident per issue cycle, waiting to be selected   
+smsp__average_warps_issue_stalled_not_selected_per_issue_active.pct                    Ratio           %               average # of warps resident per issue cycle, waiting for the          
+smsp__average_warps_issue_stalled_selected_per_issue_active.pct                        Ratio           %               average # of warps resident per issue cycle, selected by the          
+smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.pct                Ratio           %               average # of warps resident per issue cycle, waiting for a scoreboard 
+smsp__average_warps_issue_stalled_sleeping_per_issue_active.pct                        Ratio           %               average # of warps resident per issue cycle, waiting for a nanosleep  
+smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.pct                    Ratio           %               average # of warps resident per issue cycle, waiting for a free entry 
+smsp__average_warps_issue_stalled_wait_per_issue_active.pct                            Ratio           %               average # of warps resident per issue cycle, waiting on a fixed       
+smsp__warp_issue_stalled_barrier_per_warp_active.pct                        Ratio           %               proportion of warps per cycle, waiting for sibling warps at a CTA     
+smsp__warp_issue_stalled_branch_resolving_per_warp_active.pct               Ratio           %               proportion of warps per cycle, waiting for a branch target address to 
+smsp__warp_issue_stalled_dispatch_stall_per_warp_active.pct                 Ratio           %               proportion of warps per cycle, waiting on a dispatch stall (This      
+smsp__warp_issue_stalled_drain_per_warp_active.pct                          Ratio           %               proportion of warps per cycle, waiting after EXIT for all memory      
+smsp__warp_issue_stalled_imc_miss_per_warp_active.pct                       Ratio           %               proportion of warps per cycle, waiting for an immediate constant      
+smsp__warp_issue_stalled_lg_throttle_per_warp_active.pct                    Ratio           %               proportion of warps per cycle, waiting for a free entry in the LSU    
+smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct                Ratio           %               proportion of warps per cycle, waiting for a scoreboard dependency on 
+smsp__warp_issue_stalled_long_scoreboard_pipe_l1tex_per_warp_active.pct      Ratio           %               proportion of warps per cycle, waiting for a scoreboard dependency on 
+smsp__warp_issue_stalled_math_pipe_throttle_per_warp_active.pct              Ratio           %               proportion of warps per cycle, waiting for an execution pipe to be    
+smsp__warp_issue_stalled_membar_per_warp_active.pct                          Ratio           %               proportion of warps per cycle, waiting on a memory barrier (This      
+smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct                    Ratio           %               proportion of warps per cycle, waiting for a free entry in the MIO    
+smsp__warp_issue_stalled_mio_throttle_pipe_mio_per_warp_active.pct           Ratio           %               proportion of warps per cycle, waiting for a free entry in the        
+smsp__warp_issue_stalled_misc_per_warp_active.pct                            Ratio           %               proportion of warps per cycle, waiting on a miscellaneous hardware    
+smsp__warp_issue_stalled_no_instruction_per_warp_active.pct                  Ratio           %               proportion of warps per cycle, waiting to be selected for instruction 
+smsp__warp_issue_stalled_not_selected_per_warp_active.pct                    Ratio           %               proportion of warps per cycle, waiting for the microscheduler to      
+smsp__warp_issue_stalled_selected_per_warp_active.pct                        Ratio           %               proportion of warps per cycle, selected by the microscheduler to      
+smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct                Ratio           %               proportion of warps per cycle, waiting for a scoreboard dependency on 
+smsp__warp_issue_stalled_sleeping_per_warp_active.pct                        Ratio           %               proportion of warps per cycle, waiting for a nanosleep to expire      
+smsp__warp_issue_stalled_tex_throttle_per_warp_active.pct                    Ratio           %               proportion of warps per cycle, waiting for a free entry in the TEX    
+smsp__warp_issue_stalled_wait_per_warp_active.pct                            Ratio           %               proportion of warps per cycle, waiting on a fixed latency execution   
+smsp__warps_active.avg.pct_of_peak_sustained_active                          Counter         %               cumulative # of active warps (This counter metric represents the avg  
+smsp__warps_active.avg.pct_of_peak_sustained_elapsed                         Counter         %               cumulative # of active warps (This counter metric represents the avg  
+smsp__warps_active.avg.pct_of_peak_sustained_frame                           Counter         %               cumulative # of active warps                                          
+smsp__warps_active.avg.pct_of_peak_sustained_region                          Counter         %               cumulative # of active warps                                          
+smsp__warps_active.max.pct_of_peak_sustained_active                          Counter         %               cumulative # of active warps (This counter metric represents the max  
+smsp__warps_active.max.pct_of_peak_sustained_elapsed                         Counter         %               cumulative # of active warps (This counter metric represents the max  
+smsp__warps_active.max.pct_of_peak_sustained_frame                           Counter         %               cumulative # of active warps                                          
+smsp__warps_active.max.pct_of_peak_sustained_region                          Counter         %               cumulative # of active warps                                          
+smsp__warps_active.min.pct_of_peak_sustained_active                          Counter         %               cumulative # of active warps (This counter metric represents the min  
+smsp__warps_active.min.pct_of_peak_sustained_elapsed                         Counter         %               cumulative # of active warps (This counter metric represents the min  
+smsp__warps_active.min.pct_of_peak_sustained_frame                           Counter         %               cumulative # of active warps                                          
+smsp__warps_active.min.pct_of_peak_sustained_region                          Counter         %               cumulative # of active warps                                          
+smsp__warps_active.sum.pct_of_peak_sustained_active                         Counter         %               cumulative # of active warps (This counter metric represents the sum  
+smsp__warps_active.sum.pct_of_peak_sustained_elapsed                        Counter         %               cumulative # of active warps (This counter metric represents the sum  
+smsp__warps_active.sum.pct_of_peak_sustained_frame                          Counter         %               cumulative # of active warps                                          
+smsp__warps_active.sum.pct_of_peak_sustained_region                         Counter         %               cumulative # of active warps                                          
+smsp__warps_eligible.avg.pct_of_peak_sustained_active                       Counter         %               cumulative # of warps eligible to issue an instruction (This counter  
+smsp__warps_eligible.avg.pct_of_peak_sustained_elapsed                      Counter         %               cumulative # of warps eligible to issue an instruction (This counter  
+smsp__warps_eligible.avg.pct_of_peak_sustained_frame                        Counter         %               cumulative # of warps eligible to issue an instruction                
+smsp__warps_eligible.avg.pct_of_peak_sustained_region                       Counter         %               cumulative # of warps eligible to issue an instruction                
+smsp__warps_eligible.max.pct_of_peak_sustained_active                       Counter         %               cumulative # of warps eligible to issue an instruction (This counter  
+smsp__warps_eligible.max.pct_of_peak_sustained_elapsed                      Counter         %               cumulative # of warps eligible to issue an instruction (This counter  
+smsp__warps_eligible.max.pct_of_peak_sustained_frame                        Counter         %               cumulative # of warps eligible to issue an instruction                
+smsp__warps_eligible.max.pct_of_peak_sustained_region                       Counter         %               cumulative # of warps eligible to issue an instruction                
+smsp__warps_eligible.min.pct_of_peak_sustained_active                       Counter         %               cumulative # of warps eligible to issue an instruction (This counter  
+smsp__warps_eligible.min.pct_of_peak_sustained_elapsed                      Counter         %               cumulative # of warps eligible to issue an instruction (This counter  
+smsp__warps_eligible.min.pct_of_peak_sustained_frame                        Counter         %               cumulative # of warps eligible to issue an instruction                
+smsp__warps_eligible.min.pct_of_peak_sustained_region                       Counter         %               cumulative # of warps eligible to issue an instruction                
+smsp__warps_eligible.sum.pct_of_peak_sustained_active                       Counter         %               cumulative # of warps eligible to issue an instruction (This counter  
+smsp__warps_eligible.sum.pct_of_peak_sustained_elapsed                      Counter         %               cumulative # of warps eligible to issue an instruction (This counter  
+smsp__warps_eligible.sum.pct_of_peak_sustained_frame                        Counter         %               cumulative # of warps eligible to issue an instruction                
+smsp__warps_eligible.sum.pct_of_peak_sustained_region                       Counter         %               cumulative # of warps eligible to issue an instruction                
+smsp__warps_issue_stalled_barrier.avg.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.avg.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.avg.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.avg.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.max.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.max.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.max.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.max.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.min.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.min.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.min.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.min.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.sum.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.sum.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.sum.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_barrier.sum.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting for sibling warps at a CTA barrier      
+smsp__warps_issue_stalled_branch_resolving.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.min.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.min.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.min.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.sum.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.sum.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.sum.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_branch_resolving.sum.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a branch target address to be       
+smsp__warps_issue_stalled_dispatch_stall.avg.pct_of_peak_sustained_active        Counter         %               cumulative # of warps waiting on a dispatch stall (This counter       
+smsp__warps_issue_stalled_dispatch_stall.avg.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of warps waiting on a dispatch stall (This counter       
+smsp__warps_issue_stalled_dispatch_stall.avg.pct_of_peak_sustained_frame         Counter         %               cumulative # of warps waiting on a dispatch stall                     
+smsp__warps_issue_stalled_dispatch_stall.avg.pct_of_peak_sustained_region        Counter         %               cumulative # of warps waiting on a dispatch stall                     
+smsp__warps_issue_stalled_dispatch_stall.max.pct_of_peak_sustained_active        Counter         %               cumulative # of warps waiting on a dispatch stall (This counter       
+smsp__warps_issue_stalled_dispatch_stall.max.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of warps waiting on a dispatch stall (This counter       
+smsp__warps_issue_stalled_dispatch_stall.max.pct_of_peak_sustained_frame         Counter         %               cumulative # of warps waiting on a dispatch stall                     
+smsp__warps_issue_stalled_dispatch_stall.max.pct_of_peak_sustained_region        Counter         %               cumulative # of warps waiting on a dispatch stall                     
+smsp__warps_issue_stalled_dispatch_stall.min.pct_of_peak_sustained_active        Counter         %               cumulative # of warps waiting on a dispatch stall (This counter       
+smsp__warps_issue_stalled_dispatch_stall.min.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of warps waiting on a dispatch stall (This counter       
+smsp__warps_issue_stalled_dispatch_stall.min.pct_of_peak_sustained_frame         Counter         %               cumulative # of warps waiting on a dispatch stall                     
+smsp__warps_issue_stalled_dispatch_stall.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting on a dispatch stall                     
+smsp__warps_issue_stalled_dispatch_stall.sum.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting on a dispatch stall (This counter       
+smsp__warps_issue_stalled_dispatch_stall.sum.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting on a dispatch stall (This counter       
+smsp__warps_issue_stalled_dispatch_stall.sum.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting on a dispatch stall                     
+smsp__warps_issue_stalled_dispatch_stall.sum.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting on a dispatch stall                     
+smsp__warps_issue_stalled_drain.avg.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.avg.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.avg.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.avg.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.max.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.max.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.max.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.max.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.min.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.min.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.min.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.min.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.sum.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.sum.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.sum.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_drain.sum.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting after EXIT for all memory instructions  
+smsp__warps_issue_stalled_imc_miss.avg.pct_of_peak_sustained_active         Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.avg.pct_of_peak_sustained_elapsed        Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.avg.pct_of_peak_sustained_frame          Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.avg.pct_of_peak_sustained_region         Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.max.pct_of_peak_sustained_active         Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.max.pct_of_peak_sustained_elapsed        Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.max.pct_of_peak_sustained_frame          Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.max.pct_of_peak_sustained_region         Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.min.pct_of_peak_sustained_active         Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.min.pct_of_peak_sustained_elapsed        Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.min.pct_of_peak_sustained_frame          Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.min.pct_of_peak_sustained_region         Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.sum.pct_of_peak_sustained_active         Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.sum.pct_of_peak_sustained_elapsed        Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.sum.pct_of_peak_sustained_frame          Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_imc_miss.sum.pct_of_peak_sustained_region         Counter         %               cumulative # of warps waiting for an immediate constant cache (IMC)   
+smsp__warps_issue_stalled_lg_throttle.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.max.pct_of_peak_sustained_active          Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.max.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.max.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.max.pct_of_peak_sustained_region          Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.min.pct_of_peak_sustained_active          Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.min.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.min.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.min.pct_of_peak_sustained_region          Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.sum.pct_of_peak_sustained_active          Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.sum.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.sum.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_lg_throttle.sum.pct_of_peak_sustained_region          Counter         %               cumulative # of warps waiting for a free entry in the LSU instruction 
+smsp__warps_issue_stalled_long_scoreboard.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.min.pct_of_peak_sustained_active                 Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.min.pct_of_peak_sustained_elapsed                Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.min.pct_of_peak_sustained_frame                  Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.min.pct_of_peak_sustained_region                 Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.sum.pct_of_peak_sustained_active                 Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.sum.pct_of_peak_sustained_elapsed                Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.sum.pct_of_peak_sustained_frame                  Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard.sum.pct_of_peak_sustained_region                 Counter         %               cumulative # of warps waiting for a scoreboard dependency on L1TEX    
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.min.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.min.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.min.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.sum.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.sum.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.sum.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_long_scoreboard_pipe_l1tex.sum.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on          
+smsp__warps_issue_stalled_math_pipe_throttle.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.min.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.min.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.min.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.sum.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.sum.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.sum.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_math_pipe_throttle.sum.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for an execution pipe to be available   
+smsp__warps_issue_stalled_membar.avg.pct_of_peak_sustained_active                  Counter         %               cumulative # of warps waiting on a memory barrier (This counter       
+smsp__warps_issue_stalled_membar.avg.pct_of_peak_sustained_elapsed                 Counter         %               cumulative # of warps waiting on a memory barrier (This counter       
+smsp__warps_issue_stalled_membar.avg.pct_of_peak_sustained_frame                   Counter         %               cumulative # of warps waiting on a memory barrier                     
+smsp__warps_issue_stalled_membar.avg.pct_of_peak_sustained_region                  Counter         %               cumulative # of warps waiting on a memory barrier                     
+smsp__warps_issue_stalled_membar.max.pct_of_peak_sustained_active            Counter         %               cumulative # of warps waiting on a memory barrier (This counter       
+smsp__warps_issue_stalled_membar.max.pct_of_peak_sustained_elapsed           Counter         %               cumulative # of warps waiting on a memory barrier (This counter       
+smsp__warps_issue_stalled_membar.max.pct_of_peak_sustained_frame             Counter         %               cumulative # of warps waiting on a memory barrier                     
+smsp__warps_issue_stalled_membar.max.pct_of_peak_sustained_region            Counter         %               cumulative # of warps waiting on a memory barrier                     
+smsp__warps_issue_stalled_membar.min.pct_of_peak_sustained_active            Counter         %               cumulative # of warps waiting on a memory barrier (This counter       
+smsp__warps_issue_stalled_membar.min.pct_of_peak_sustained_elapsed           Counter         %               cumulative # of warps waiting on a memory barrier (This counter       
+smsp__warps_issue_stalled_membar.min.pct_of_peak_sustained_frame             Counter         %               cumulative # of warps waiting on a memory barrier                     
+smsp__warps_issue_stalled_membar.min.pct_of_peak_sustained_region            Counter         %               cumulative # of warps waiting on a memory barrier                     
+smsp__warps_issue_stalled_membar.sum.pct_of_peak_sustained_active            Counter         %               cumulative # of warps waiting on a memory barrier (This counter       
+smsp__warps_issue_stalled_membar.sum.pct_of_peak_sustained_elapsed           Counter         %               cumulative # of warps waiting on a memory barrier (This counter       
+smsp__warps_issue_stalled_membar.sum.pct_of_peak_sustained_frame             Counter         %               cumulative # of warps waiting on a memory barrier                     
+smsp__warps_issue_stalled_membar.sum.pct_of_peak_sustained_region            Counter         %               cumulative # of warps waiting on a memory barrier                     
+smsp__warps_issue_stalled_mio_throttle.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.min.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.min.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.min.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.min.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.sum.pct_of_peak_sustained_active               Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.sum.pct_of_peak_sustained_elapsed              Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.sum.pct_of_peak_sustained_frame                Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle.sum.pct_of_peak_sustained_region               Counter         %               cumulative # of warps waiting for a free entry in the MIO instruction 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.min.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.min.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.min.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.sum.pct_of_peak_sustained_active  Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.sum.pct_of_peak_sustained_elapsed Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.sum.pct_of_peak_sustained_frame   Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_mio_throttle_pipe_mio.sum.pct_of_peak_sustained_region  Counter         %               cumulative # of warps waiting for a free entry in the non-RTCORE pipe 
+smsp__warps_issue_stalled_misc.avg.pct_of_peak_sustained_active                   Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.avg.pct_of_peak_sustained_elapsed                  Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.avg.pct_of_peak_sustained_frame                    Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.avg.pct_of_peak_sustained_region                   Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.max.pct_of_peak_sustained_active                   Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.max.pct_of_peak_sustained_elapsed                  Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.max.pct_of_peak_sustained_frame                    Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.max.pct_of_peak_sustained_region                   Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.min.pct_of_peak_sustained_active                   Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.min.pct_of_peak_sustained_elapsed                  Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.min.pct_of_peak_sustained_frame                    Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.min.pct_of_peak_sustained_region                   Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.sum.pct_of_peak_sustained_active                   Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.sum.pct_of_peak_sustained_elapsed                  Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.sum.pct_of_peak_sustained_frame                    Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_misc.sum.pct_of_peak_sustained_region                   Counter         %               cumulative # of warps waiting on a miscellaneous hardware reason      
+smsp__warps_issue_stalled_no_instruction.avg.pct_of_peak_sustained_active         Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.avg.pct_of_peak_sustained_elapsed        Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.avg.pct_of_peak_sustained_frame          Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.avg.pct_of_peak_sustained_region         Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.min.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.min.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.min.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.sum.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.sum.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.sum.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_no_instruction.sum.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting to be selected for instruction fetch,   
+smsp__warps_issue_stalled_not_selected.avg.pct_of_peak_sustained_active        Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.avg.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.avg.pct_of_peak_sustained_frame         Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.avg.pct_of_peak_sustained_region        Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.max.pct_of_peak_sustained_active        Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.max.pct_of_peak_sustained_elapsed       Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.max.pct_of_peak_sustained_frame         Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.max.pct_of_peak_sustained_region        Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.min.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.min.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.min.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.sum.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.sum.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.sum.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_not_selected.sum.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for the microscheduler to select the    
+smsp__warps_issue_stalled_selected.avg.pct_of_peak_sustained_active          Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.avg.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.avg.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.avg.pct_of_peak_sustained_region          Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.max.pct_of_peak_sustained_active          Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.max.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.max.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.max.pct_of_peak_sustained_region          Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.min.pct_of_peak_sustained_active          Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.min.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.min.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.min.pct_of_peak_sustained_region          Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.sum.pct_of_peak_sustained_active              Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.sum.pct_of_peak_sustained_elapsed             Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.sum.pct_of_peak_sustained_frame               Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_selected.sum.pct_of_peak_sustained_region              Counter         %               cumulative # of warps selected by the microscheduler to issue an      
+smsp__warps_issue_stalled_short_scoreboard.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.min.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.min.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.min.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.sum.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.sum.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.sum.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_short_scoreboard.sum.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a scoreboard dependency on MIO      
+smsp__warps_issue_stalled_sleeping.avg.pct_of_peak_sustained_active              Counter         %               cumulative # of warps waiting for a nanosleep to expire (This counter 
+smsp__warps_issue_stalled_sleeping.avg.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps waiting for a nanosleep to expire (This counter 
+smsp__warps_issue_stalled_sleeping.avg.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps waiting for a nanosleep to expire               
+smsp__warps_issue_stalled_sleeping.avg.pct_of_peak_sustained_region          Counter         %               cumulative # of warps waiting for a nanosleep to expire               
+smsp__warps_issue_stalled_sleeping.max.pct_of_peak_sustained_active          Counter         %               cumulative # of warps waiting for a nanosleep to expire (This counter 
+smsp__warps_issue_stalled_sleeping.max.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps waiting for a nanosleep to expire (This counter 
+smsp__warps_issue_stalled_sleeping.max.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps waiting for a nanosleep to expire               
+smsp__warps_issue_stalled_sleeping.max.pct_of_peak_sustained_region          Counter         %               cumulative # of warps waiting for a nanosleep to expire               
+smsp__warps_issue_stalled_sleeping.min.pct_of_peak_sustained_active          Counter         %               cumulative # of warps waiting for a nanosleep to expire (This counter 
+smsp__warps_issue_stalled_sleeping.min.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps waiting for a nanosleep to expire (This counter 
+smsp__warps_issue_stalled_sleeping.min.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps waiting for a nanosleep to expire               
+smsp__warps_issue_stalled_sleeping.min.pct_of_peak_sustained_region          Counter         %               cumulative # of warps waiting for a nanosleep to expire               
+smsp__warps_issue_stalled_sleeping.sum.pct_of_peak_sustained_active          Counter         %               cumulative # of warps waiting for a nanosleep to expire (This counter 
+smsp__warps_issue_stalled_sleeping.sum.pct_of_peak_sustained_elapsed         Counter         %               cumulative # of warps waiting for a nanosleep to expire (This counter 
+smsp__warps_issue_stalled_sleeping.sum.pct_of_peak_sustained_frame           Counter         %               cumulative # of warps waiting for a nanosleep to expire               
+smsp__warps_issue_stalled_sleeping.sum.pct_of_peak_sustained_region          Counter         %               cumulative # of warps waiting for a nanosleep to expire               
+smsp__warps_issue_stalled_tex_throttle.avg.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.avg.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.avg.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.avg.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.max.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.max.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.max.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.max.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.min.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.min.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.min.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.min.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.sum.pct_of_peak_sustained_active      Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.sum.pct_of_peak_sustained_elapsed     Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.sum.pct_of_peak_sustained_frame       Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_tex_throttle.sum.pct_of_peak_sustained_region      Counter         %               cumulative # of warps waiting for a free entry in the TEX instruction 
+smsp__warps_issue_stalled_wait.avg.pct_of_peak_sustained_active              Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.avg.pct_of_peak_sustained_elapsed             Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.avg.pct_of_peak_sustained_frame               Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.avg.pct_of_peak_sustained_region              Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.max.pct_of_peak_sustained_active              Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.max.pct_of_peak_sustained_elapsed             Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.max.pct_of_peak_sustained_frame               Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.max.pct_of_peak_sustained_region              Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.min.pct_of_peak_sustained_active              Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.min.pct_of_peak_sustained_elapsed             Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.min.pct_of_peak_sustained_frame               Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.min.pct_of_peak_sustained_region              Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.sum.pct_of_peak_sustained_active             Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.sum.pct_of_peak_sustained_elapsed            Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.sum.pct_of_peak_sustained_frame              Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_issue_stalled_wait.sum.pct_of_peak_sustained_region             Counter         %               cumulative # of warps waiting on a fixed latency execution dependency 
+smsp__warps_launched.avg.pct_of_peak_sustained_active                       Counter         %               # of warps launched (This counter metric represents the avg percent   
+smsp__warps_launched.avg.pct_of_peak_sustained_elapsed                      Counter         %               # of warps launched (This counter metric represents the avg percent   
+smsp__warps_launched.avg.pct_of_peak_sustained_frame                        Counter         %               # of warps launched                                                   
+smsp__warps_launched.avg.pct_of_peak_sustained_region                       Counter         %               # of warps launched                                                   
+smsp__warps_launched.max.pct_of_peak_sustained_active                       Counter         %               # of warps launched (This counter metric represents the max percent   
+smsp__warps_launched.max.pct_of_peak_sustained_elapsed                      Counter         %               # of warps launched (This counter metric represents the max percent   
+smsp__warps_launched.max.pct_of_peak_sustained_frame                        Counter         %               # of warps launched                                                   
+smsp__warps_launched.max.pct_of_peak_sustained_region                       Counter         %               # of warps launched                                                   
+smsp__warps_launched.min.pct_of_peak_sustained_active                       Counter         %               # of warps launched (This counter metric represents the min percent   
+smsp__warps_launched.min.pct_of_peak_sustained_elapsed                      Counter         %               # of warps launched (This counter metric represents the min percent   
+smsp__warps_launched.min.pct_of_peak_sustained_frame                        Counter         %               # of warps launched                                                   
+smsp__warps_launched.min.pct_of_peak_sustained_region                       Counter         %               # of warps launched                                                   
+smsp__warps_launched.sum.pct_of_peak_sustained_active                       Counter         %               # of warps launched (This counter metric represents the sum percent   
+smsp__warps_launched.sum.pct_of_peak_sustained_elapsed                      Counter         %               # of warps launched (This counter metric represents the sum percent   
+smsp__warps_launched.sum.pct_of_peak_sustained_frame                        Counter         %               # of warps launched                                                   
+smsp__warps_launched.sum.pct_of_peak_sustained_region                       Counter         %               # of warps launched                                                   
+smsp__warps_launched_total.avg.pct_of_peak_sustained_active                 Counter         %               # of warps launched including warps restored from pre-emption (This   
+smsp__warps_launched_total.avg.pct_of_peak_sustained_elapsed                Counter         %               # of warps launched including warps restored from pre-emption (This   
+smsp__warps_launched_total.avg.pct_of_peak_sustained_frame                  Counter         %               # of warps launched including warps restored from pre-emption         
+smsp__warps_launched_total.avg.pct_of_peak_sustained_region                 Counter         %               # of warps launched including warps restored from pre-emption         
+smsp__warps_launched_total.max.pct_of_peak_sustained_active                 Counter         %               # of warps launched including warps restored from pre-emption (This   
+smsp__warps_launched_total.max.pct_of_peak_sustained_elapsed                Counter         %               # of warps launched including warps restored from pre-emption (This   
+smsp__warps_launched_total.max.pct_of_peak_sustained_frame                  Counter         %               # of warps launched including warps restored from pre-emption         
+smsp__warps_launched_total.max.pct_of_peak_sustained_region                 Counter         %               # of warps launched including warps restored from pre-emption         
+smsp__warps_launched_total.min.pct_of_peak_sustained_active                 Counter         %               # of warps launched including warps restored from pre-emption (This   
+smsp__warps_launched_total.min.pct_of_peak_sustained_elapsed                Counter         %               # of warps launched including warps restored from pre-emption (This   
+smsp__warps_launched_total.min.pct_of_peak_sustained_frame                  Counter         %               # of warps launched including warps restored from pre-emption         
+smsp__warps_launched_total.min.pct_of_peak_sustained_region                 Counter         %               # of warps launched including warps restored from pre-emption         
+smsp__warps_launched_total.sum.pct_of_peak_sustained_active                 Counter         %               # of warps launched including warps restored from pre-emption (This   
+smsp__warps_launched_total.sum.pct_of_peak_sustained_elapsed                Counter         %               # of warps launched including warps restored from pre-emption (This   
+smsp__warps_launched_total.sum.pct_of_peak_sustained_frame                  Counter         %               # of warps launched including warps restored from pre-emption         
+smsp__warps_launched_total.sum.pct_of_peak_sustained_region                 Counter         %               # of warps launched including warps restored from pre-emption         
+smsp__warps_restored.avg.pct_of_peak_sustained_active                       Counter         %               # of warp preemption-restore events (This counter metric represents   
+smsp__warps_restored.avg.pct_of_peak_sustained_elapsed                      Counter         %               # of warp preemption-restore events (This counter metric represents   
+smsp__warps_restored.avg.pct_of_peak_sustained_frame                        Counter         %               # of warp preemption-restore events                                   
+smsp__warps_restored.avg.pct_of_peak_sustained_region                       Counter         %               # of warp preemption-restore events                                   
+smsp__warps_restored.max.pct_of_peak_sustained_active                       Counter         %               # of warp preemption-restore events (This counter metric represents   
+smsp__warps_restored.max.pct_of_peak_sustained_elapsed                      Counter         %               # of warp preemption-restore events (This counter metric represents   
+smsp__warps_restored.max.pct_of_peak_sustained_frame                        Counter         %               # of warp preemption-restore events                                   
+smsp__warps_restored.max.pct_of_peak_sustained_region                       Counter         %               # of warp preemption-restore events                                   
+smsp__warps_restored.min.pct_of_peak_sustained_active                       Counter         %               # of warp preemption-restore events (This counter metric represents   
+smsp__warps_restored.min.pct_of_peak_sustained_elapsed                      Counter         %               # of warp preemption-restore events (This counter metric represents   
+smsp__warps_restored.min.pct_of_peak_sustained_frame                        Counter         %               # of warp preemption-restore events                                   
+smsp__warps_restored.min.pct_of_peak_sustained_region                       Counter         %               # of warp preemption-restore events                                   
+smsp__warps_restored.sum.pct_of_peak_sustained_active                       Counter         %               # of warp preemption-restore events (This counter metric represents   
+smsp__warps_restored.sum.pct_of_peak_sustained_elapsed                      Counter         %               # of warp preemption-restore events (This counter metric represents   
+smsp__warps_restored.sum.pct_of_peak_sustained_frame                        Counter         %               # of warp preemption-restore events                                   
+smsp__warps_restored.sum.pct_of_peak_sustained_region                       Counter         %               # of warp preemption-restore events                                   

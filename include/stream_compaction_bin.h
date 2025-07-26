@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <string>
 #include "common.h"  // for Point2D
+#include "bin_kernel.h"
 
 /**
  * @brief Compute bin offsets and sizes based on k lower bits of Morton codes.
@@ -70,13 +71,14 @@ void testBinGPUCompaction(const std::vector<Point2D>& input,
 
 
 /* === Plan-B: single-pass atomic version ================================= */
-void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
-                                 float                       threshold,
-                                 int                         kBits,
-                                 std::vector<Point2D>&       output,
-                                 float&                      t_kernel_ms,
-                                 float&                      t_total_ms);
-
+// void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
+//                                  float                       threshold,
+//                                  int                         kBits,
+//                                  std::vector<Point2D>&       output,
+//                                  float&                      t_kernel_ms,
+//                                  float&                      t_total_ms);
+void testBinGPUCompaction_atomic(const std::vector<Point2D>&, float, int,
+                                 std::vector<Point2D>&, float&, float&);
 /**
  * @brief Single-pass bin compaction using atomics.
  *        Measures both “kernel-only” time (t_kernel_ms)
@@ -88,14 +90,27 @@ void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
  * @param t_kernel_ms Return: pure-kernel time   (ms)
  * @param t_total_ms  Return: total GPU time incl. H2D / D2H (ms)
  */
-__global__ void compactBinAtomic(const Point2D* __restrict__ in,
-                                 Point2D*       __restrict__ out,
-                                 const uint32_t*__restrict__ codes,
-                                 int*           binCursor,
-                                 int            N,
-                                 int            mask,
-                                 float          threshold);
+// __global__ void compactBinAtomic(const Point2D* __restrict__ in,
+//                                  Point2D*       __restrict__ out,
+//                                  const uint32_t*__restrict__ codes,
+//                                  int*           binCursor,
+//                                  int            N,
+//                                  int            mask,
+//                                  float          threshold);
 
+// __global__ void compactBinAtomic(const Point2D* in,
+//                                  Point2D*       out,
+//                                  int*           binCursor,
+//                                  const int*     binOffsets,  // 新增
+//                                  const uint32_t* codes,
+//                                  int            N,
+//                                  int            mask,
+//                                  float          thr);
+
+__global__ void compactBinAtomic(const Point2D*, Point2D*, int*, const uint32_t*,
+                                 int, int, float);
+
+                                 
 
 /**
  * @brief Build per-bin histogram (sizes) from Morton codes.
@@ -127,6 +142,8 @@ __global__ void scatterToBins(const Point2D* in,
                               int            N,
                               int            mask);
 
+
+
 /**
  * @brief Plan-A 版本：直方图 → scan → scatter → per-bin compaction（共享内存或其他）。
  *
@@ -137,9 +154,35 @@ __global__ void scatterToBins(const Point2D* in,
  * @param t_kernel_ms  Return — kernel-only elapsed time (ms)
  * @param t_total_ms   Return — total GPU time incl. H2D / D2H (ms)
  */
+// void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
+//                                     float                       threshold,
+//                                     int                         kBits,
+//                                     std::vector<Point2D>&       output,
+//                                     float&                      t_kernel_ms,
+//                                     float&                      t_total_ms
+//                                     BinKernel kernelKind);
+
 void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
-                                    float                       threshold,
-                                    int                         kBits,
-                                    std::vector<Point2D>&       output,
-                                    float&                      t_kernel_ms,
-                                    float&                      t_total_ms);
+                                    float  threshold,
+                                    int    kBits,
+                                    std::vector<Point2D>& output,
+                                    float& t_kernel_ms,
+                                    float& t_total_ms,
+                                    BinKernel kernelKind);        // ← 第 7 个参数
+
+
+
+
+void compactWarpGPU(const Point2D* d_in,
+                    Point2D*       d_out,
+                    int            N,
+                    float          threshold,
+                    int&           h_outCount);
+
+
+void compactOneBin(Point2D* d_in,      // bin input (contiguous)
+                   Point2D* d_out,     // bin output base
+                   int      N,         // elements in this bin
+                   float    threshold, // predicate value
+                   int&     h_outCnt,  // host-side result count
+                   BinKernel kind);     // strategy

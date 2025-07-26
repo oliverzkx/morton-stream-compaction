@@ -1,6 +1,9 @@
 #pragma once
 
 #include "common.h"
+#include "bin_kernel.h"
+
+extern float d_threshold;
 
 /// Device-side predicate used in GPU kernels
 __device__ inline bool isHotPredicateDevice(const Point2D& p);
@@ -46,6 +49,7 @@ void compact_points_bitmask_surface(
     int num_points,
     int surface_width
 );
+
 
 /// Test: Naive GPU compaction
 void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output);

@@ -4,7 +4,7 @@
 #include "common.h"          // <- contains typedef Point, predicate, etc.
 #include <iostream>
 
-__constant__ float d_threshold;
+__device__ __constant__ float d_threshold;
 __constant__ double d_threshold_double;
 
 
@@ -188,6 +188,11 @@ void compactSharedGPU(const Point2D* d_in, Point2D* d_out, int N,
     // Launch shared memory kernel
     streamCompactShared<<<dimGrid, dimBlock, shared_mem_bytes>>>(
         d_in, d_out, N, threshold, d_block_counts);
+    
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("launch error: %s\n", cudaGetErrorString(err));
+    }
 
     // Copy per-block results back to host
     std::vector<int> h_block_counts(dimGrid.x);
