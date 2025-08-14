@@ -26,6 +26,10 @@
 #include "common.h"      // Point2D definition
 #include "bin_kernel.h"  // BinKernel enum
 
+#ifndef BINS_MAX
+#define BINS_MAX 256   // kBits <= 8 时为 256
+#endif
+
 // ────────────────────────────────────────────────────────────────
 // Host-side helpers (declarations)
 // ────────────────────────────────────────────────────────────────
@@ -215,3 +219,24 @@ __global__ void compactBinAtomic(const Point2D*  in,
                                  int             N,
                                  int             mask,
                                  float           threshold);
+
+ __global__ void buildDestMapKernel(
+    const uint32_t* __restrict__ d_codes,       // [N] morton codes
+    const int*      __restrict__ d_binOffsets,  // [numBins] exclusive scan
+    int*            __restrict__ d_binCursor,   // [numBins] 运行时计数器(launch前清零)
+    int*            __restrict__ d_srcIndexForDest, // [N]
+    int N, int mask);
+
+
+__global__ void gatherCopyKernel(
+    const Point2D*  __restrict__ d_in,          // [N]
+    Point2D*        __restrict__ d_out,         // [N]
+    const int*      __restrict__ d_srcIndexForDest, // [N]
+    int N);
+
+// __global__ void buildDestMapKernel_naive(
+//     const uint32_t* __restrict__ d_codes,        // [N]
+//     const int*      __restrict__ d_binOffsets,   // [numBins]
+//     int*            __restrict__ d_binCursor,    // [numBins]
+//     int*            __restrict__ d_srcIndexForDest, // [N]
+//     int N, int mask);

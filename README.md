@@ -78,7 +78,7 @@ make clean && make -j
 # 2 M points, bin-partition pipeline, automatically chooses fastest kernel
 ```
 
-
+·
 ## Documentation
 
 This project uses [Doxygen](https://www.doxygen.nl/) to generate browsable HTML documentation.

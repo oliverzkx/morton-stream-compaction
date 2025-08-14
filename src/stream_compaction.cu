@@ -32,6 +32,32 @@ __device__ inline bool isHotPredicateDevice(const Point2D_double& p) {
     return isHotPoint(p, d_threshold_double);  // d_threshold_double is __constant__ double
 }
 
+
+static inline dim3 choose_grid_force_big(int blockSize, int perSM = 8) {
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0);
+    int sms  = prop.multiProcessorCount;
+    int grid = sms * perSM;          // 直接发 SM×perSM
+    return dim3(max(1, grid));
+}
+
+
+static inline dim3 choose_grid_fullwaves(void* kernel, int blockSize, int waves = 2) {
+    cudaDeviceProp prop; 
+    cudaGetDeviceProperties(&prop, 0);
+    int sms = prop.multiProcessorCount;
+
+    int activeBlocksPerSM = 0;
+    // 第4个参数是动态共享内存字节数，这里是 0；如果你核里用了 extern __shared__ 要填实际值
+    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+        &activeBlocksPerSM, (const void*)kernel, blockSize, /*dynamicSMemBytes=*/0);
+
+    // 发“整倍数”的 wave，避免 partial wave（尾效应）
+    int grid = sms * activeBlocksPerSM * waves;   // 建议 waves=2 或 3
+    if (grid < 1) grid = 1;
+    return dim3(grid);
+}
+
 // -------------------- naïve kernel ------------------------
 /**
  * @brief Naïve stream compaction kernel using a global atomic counter.
@@ -51,6 +77,7 @@ __global__ void streamCompactNaive(const Point2D* in,
                                    int*         d_counter)   // global write index
 {
     // Compute thread ID
+    /*
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= N) return;
 
@@ -60,6 +87,17 @@ __global__ void streamCompactNaive(const Point2D* in,
         // Atomically get output position
         int pos = atomicAdd(d_counter, 1);   // global counter ++
         out[pos] = val;                      // write to compacted array
+    }
+    */
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+         idx < N;
+         idx += blockDim.x * gridDim.x)
+    {
+        Point2D v = in[idx];
+        if (isHotPredicateDevice(v)) {
+            int pos = atomicAdd(d_counter, 1);
+            out[pos] = v;
+        }
     }
 }
 
@@ -86,8 +124,12 @@ void compactNaiveGPU(const Point2D* d_in, Point2D* d_out, int N, int& h_outCount
     // streamCompactNaive<<<blocks, threads>>>(d_in, d_out, N, d_counter);
 
     // 🔧 Standard dim3 configuration
+    // dim3 dimBlock(BLOCK_SIZE);
+    // dim3 dimGrid((N + BLOCK_SIZE  - 1) / BLOCK_SIZE );
+    // use SM * 8 to try to maximize occupancy
     dim3 dimBlock(BLOCK_SIZE);
-    dim3 dimGrid((N + BLOCK_SIZE  - 1) / BLOCK_SIZE );
+    //dim3 dimGrid = choose_grid(N, BLOCK_SIZE, 8);
+    dim3 dimGrid = choose_grid_force_big(BLOCK_SIZE, 8);
 
     streamCompactNaive<<<dimGrid, dimBlock>>>(d_in, d_out, N, d_counter);
 
@@ -448,6 +490,7 @@ void compact_points_warp(
 ) {
     const dim3 blockDim(BLOCK_SIZE);
     const dim3 gridDim((num_points + BLOCK_SIZE - 1) / BLOCK_SIZE);
+    //const dim3 gridDim = choose_grid(num_points, BLOCK_SIZE, 8);
 
     // Initialize compacted count to zero
     cudaMemset(d_count, 0, sizeof(int));
@@ -542,6 +585,7 @@ __global__ void compactPointsBitmask(
     int* d_count,
     int num_points
 ) {
+    /*
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= num_points) return;
 
@@ -572,6 +616,31 @@ __global__ void compactPointsBitmask(
         int output_index = warp_offsets[warp_id] + local_pos;
         d_output[output_index] = pt;
     }
+    */
+    ///////////////////////////////////////////////////////////////////////////////////
+    /**/
+    const unsigned lane = threadIdx.x & 31u;
+    // 可选：const unsigned wid  = threadIdx.x >> 5;
+
+    for (int idx = blockIdx.x * blockDim.x + threadIdx.x;
+         idx < num_points;
+         idx += blockDim.x * gridDim.x)
+    {
+        Point2D pt = d_input[idx];
+        bool keep  = isHotPredicateDevice(pt);
+
+        unsigned m   = __ballot_sync(0xffffffff, keep);
+        int warp_cnt = __popc(m);
+        int rank     = __popc(m & ((1u << lane) - 1u));
+
+        // lane0 原子预留，随后用 shuffle 广播给全 warp
+        int base = 0;
+        if (lane == 0 && warp_cnt) base = atomicAdd(d_count, warp_cnt);
+        base = __shfl_sync(0xffffffff, base, 0);   // 广播 lane0 的 base
+
+        if (keep) d_output[base + rank] = pt;      // 升序写回 → 合并
+    }
+
 }
 
 /**
@@ -641,7 +710,10 @@ void compact_points_bitmask(
     int num_points
 ) {
     const dim3 blockDim(BLOCK_SIZE);
-    const dim3 gridDim((num_points + BLOCK_SIZE - 1) / BLOCK_SIZE);
+    // const dim3 gridDim((num_points + BLOCK_SIZE - 1) / BLOCK_SIZE);
+    // const dim3 gridDim = choose_grid(num_points, BLOCK_SIZE, 8);
+    //const dim3 gridDim = choose_grid_force_big(BLOCK_SIZE, 8);
+    const dim3 gridDim  = choose_grid_fullwaves((void*)compactPointsBitmask, BLOCK_SIZE, /*waves=*/2);
 
     cudaMemset(d_count, 0, sizeof(int));
 
@@ -668,7 +740,8 @@ void compact_points_bitmask_surface(
     int surface_width
 ) {
     dim3 blockDim(BLOCK_SIZE);
-    dim3 gridDim((num_points + blockDim.x - 1) / blockDim.x);
+    //dim3 gridDim((num_points + blockDim.x - 1) / blockDim.x);
+    const dim3 gridDim = choose_grid_force_big(BLOCK_SIZE, 8);
 
     cudaMemset(d_count, 0, sizeof(int));  // ensure count starts from 0
 
