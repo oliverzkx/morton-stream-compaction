@@ -173,9 +173,15 @@ void compact_points_bitmask_surface(const Point2D*       d_input,
 // Host-side correctness / performance tests
 // ────────────────────────────────────────────────────────────────
 
+// void testNaiveGPUCompaction(const std::vector<Point2D>& input,
+//                             float                       threshold,
+//                             std::vector<Point2D>&       output);
+
 void testNaiveGPUCompaction(const std::vector<Point2D>& input,
                             float                       threshold,
-                            std::vector<Point2D>&       output);
+                            std::vector<Point2D>&       output,
+                            float*                      ms_kernel /*=nullptr*/,
+                            float*                      ms_e2e    /*=nullptr*/);
 
 void testSharedGPUCompaction(const std::vector<Point2D>& input,
                              float                       threshold,

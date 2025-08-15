@@ -89,11 +89,19 @@ void runBitmaskBenchmarkWithBins(int               size,
  * @param kBits     Number of low Morton bits used for the bin ID.
  * @param output    Host-side vector receiving compacted points.
  */
+// void testBinGPUCompaction(const std::vector<Point2D>& input,
+//                           float                       threshold,
+//                           int                         kBits,
+//                           std::vector<Point2D>&       output);
+
 void testBinGPUCompaction(const std::vector<Point2D>& input,
                           float                       threshold,
                           int                         kBits,
-                          std::vector<Point2D>&       output);
+                          std::vector<Point2D>&       output,
+                          float*                      ms_kernel /*= nullptr*/,
+                          float*                      ms_e2e    /*= nullptr*/);
 
+                          
 /**
  * @brief Single-pass atomic version for quick prototyping / fallback.
  *
@@ -110,6 +118,7 @@ void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
                                  std::vector<Point2D>&       output,
                                  float&                      t_kernel_ms,
                                  float&                      t_total_ms);
+
 
 /**
  * @brief Plan-A pipeline wrapper that lets the caller choose a ::BinKernel variant.
@@ -240,3 +249,23 @@ __global__ void gatherCopyKernel(
 //     int*            __restrict__ d_binCursor,    // [numBins]
 //     int*            __restrict__ d_srcIndexForDest, // [N]
 //     int N, int mask);
+
+__device__ __forceinline__ uint32_t part1by1(uint32_t x);
+
+__device__ __forceinline__ uint32_t morton2D_encode_dev(uint32_t x, uint32_t y);
+
+__global__ void genMortonCodesKernel(const Point2D* __restrict__ in,
+                                     uint32_t*      __restrict__ codes,
+                                     int N);
+
+__global__ void countValidPerBin_fromCodes(const Point2D*  __restrict__ in,
+                                           const uint32_t* __restrict__ codes,
+                                           int*            __restrict__ binValid,
+                                           int N, int mask, float thr);
+
+__global__ void writePerBinAtomic_fromCodes(const Point2D*  __restrict__ in,
+                                            const uint32_t* __restrict__ codes,
+                                            Point2D*        __restrict__ out,
+                                            const int*      __restrict__ binBase,
+                                            int*            __restrict__ binFill,
+                                            int N, int mask, float thr);

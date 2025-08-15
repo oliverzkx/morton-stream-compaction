@@ -22,6 +22,17 @@
 __device__ __constant__ float d_threshold; //!< float threshold
 __constant__ double d_threshold_double; //!< double threshold
 
+// 可选：简单错误检查宏
+#ifndef CUDA_CHECK
+#define CUDA_CHECK(x) do { \
+  cudaError_t err__ = (x); \
+  if (err__ != cudaSuccess) { \
+    fprintf(stderr, "CUDA error %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(err__)); \
+    std::exit(1); \
+  } \
+} while(0)
+#endif
+
 
 __device__ inline bool isHotPredicateDevice(const Point2D& p)
 {
@@ -263,52 +274,131 @@ void compactSharedGPU(const Point2D* d_in, Point2D* d_out, int N,
  * @param threshold    Temperature threshold for filtering.
  * @param output       Vector to store the compacted results.
  */
-void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
-    std::cout << "\n[GPU] Testing Naive Stream Compaction..." << std::endl;
+// void testNaiveGPUCompaction(const std::vector<Point2D>& input, float threshold, std::vector<Point2D>& output) {
+//     std::cout << "\n[GPU] Testing Naive Stream Compaction..." << std::endl;
 
-    int N = input.size();
-    Point2D* d_input = nullptr;
+//     int N = input.size();
+//     Point2D* d_input = nullptr;
+//     Point2D* d_output = nullptr;
+//     int compactedCount = 0;
+
+//     // Create CUDA event timer
+//     cudaEvent_t start, stop;
+//     cudaEventCreate(&start);
+//     cudaEventCreate(&stop);
+
+//     // ✅ Start full GPU timing here (includes malloc, memcpy, kernel, copy back, free)
+//     cudaEventRecord(start);
+
+//     // Allocate and copy input
+//     cudaMalloc(&d_input, N * sizeof(Point2D));
+//     cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
+//     cudaMalloc(&d_output, N * sizeof(Point2D));
+
+//     // Copy threshold to constant memory
+//     cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
+
+//     // Call your original kernel (compactedCount passed by reference)
+//     compactNaiveGPU(d_input, d_output, N, compactedCount);
+
+//     // Resize and copy result back to host
+//     output.resize(compactedCount);
+//     cudaMemcpy(output.data(), d_output, compactedCount * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+//     // Free memory
+//     cudaFree(d_input);
+//     cudaFree(d_output);
+
+//     // ✅ Stop full GPU timing
+//     cudaEventRecord(stop);
+//     cudaEventSynchronize(stop);
+//     float milliseconds = 0;
+//     cudaEventElapsedTime(&milliseconds, start, stop);
+
+//     std::cout << "⏱️ Naive GPU total time (including memory ops): " << milliseconds << " ms\n";
+//     std::cout << "📌 Compacted count: " << compactedCount << "\n";
+
+//     cudaEventDestroy(start);
+//     cudaEventDestroy(stop);
+// }
+
+
+/**
+ * @brief Unbinned (whole-array) GPU compaction with clean timing.
+ *
+ * Measures:
+ *  - ms_kernel:  only kernels inside compactNaiveGPU (plus anything it enqueues)
+ *  - ms_e2e:     H2D(input) -> kernels -> D2H(output)  (excludes alloc/free & host prep)
+ *
+ * Notes:
+ *  - This version preserves your original kernel launcher signature.
+ *  - If compactNaiveGPU internally performs small host<->device ops for the count,
+ *    they will be included in ms_kernel (that’s OK for a baseline).
+ */
+void testNaiveGPUCompaction(const std::vector<Point2D>& input,
+                            float                       threshold,
+                            std::vector<Point2D>&       output,
+                            float*                      ms_kernel /*=nullptr*/,
+                            float*                      ms_e2e    /*=nullptr*/)
+{
+    const int    N        = static_cast<int>(input.size());
+    const size_t bytes_in = N * sizeof(Point2D);
+
+    Point2D* d_input  = nullptr;
     Point2D* d_output = nullptr;
+
+    // -------- alloc (NOT counted in E2E) --------
+    CUDA_CHECK(cudaMalloc(&d_input,  bytes_in));
+    CUDA_CHECK(cudaMalloc(&d_output, bytes_in)); // worst-case N
+
+    // -------- events on default stream (0) --------
+    cudaEvent_t eStart, eStop, kStart, kStop;
+    CUDA_CHECK(cudaEventCreate(&eStart));
+    CUDA_CHECK(cudaEventCreate(&eStop));
+    CUDA_CHECK(cudaEventCreate(&kStart));
+    CUDA_CHECK(cudaEventCreate(&kStop));
+
+    // -------- E2E begin: first H2D --------
+    CUDA_CHECK(cudaEventRecord(eStart, 0));
+
+    // H2D input
+    CUDA_CHECK(cudaMemcpyAsync(d_input, input.data(), bytes_in,
+                               cudaMemcpyHostToDevice, 0));
+
+    // threshold to constant memory (async to same stream)
+    CUDA_CHECK(cudaMemcpyToSymbolAsync(d_threshold, &threshold, sizeof(float),
+                                       /*offset*/0, cudaMemcpyHostToDevice, 0));
+
+    // -------- kernel-only timing --------
+    CUDA_CHECK(cudaEventRecord(kStart, 0));
     int compactedCount = 0;
-
-    // Create CUDA event timer
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    // ✅ Start full GPU timing here (includes malloc, memcpy, kernel, copy back, free)
-    cudaEventRecord(start);
-
-    // Allocate and copy input
-    cudaMalloc(&d_input, N * sizeof(Point2D));
-    cudaMemcpy(d_input, input.data(), N * sizeof(Point2D), cudaMemcpyHostToDevice);
-    cudaMalloc(&d_output, N * sizeof(Point2D));
-
-    // Copy threshold to constant memory
-    cudaMemcpyToSymbol(d_threshold, &threshold, sizeof(float));
-
-    // Call your original kernel (compactedCount passed by reference)
+    // Your original unbinned launcher — keep it as is
     compactNaiveGPU(d_input, d_output, N, compactedCount);
+    CUDA_CHECK(cudaEventRecord(kStop, 0));
 
-    // Resize and copy result back to host
+    // -------- D2H: fetch compacted data --------
     output.resize(compactedCount);
-    cudaMemcpy(output.data(), d_output, compactedCount * sizeof(Point2D), cudaMemcpyDeviceToHost);
+    if (compactedCount > 0) {
+        CUDA_CHECK(cudaMemcpyAsync(output.data(), d_output,
+                                   compactedCount * sizeof(Point2D),
+                                   cudaMemcpyDeviceToHost, 0));
+    }
 
-    // Free memory
-    cudaFree(d_input);
-    cudaFree(d_output);
+    // E2E end
+    CUDA_CHECK(cudaEventRecord(eStop, 0));
+    CUDA_CHECK(cudaEventSynchronize(eStop));
 
-    // ✅ Stop full GPU timing
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
+    // -------- timings --------
+    float tK = 0.f, tE = 0.f;
+    CUDA_CHECK(cudaEventElapsedTime(&tK, kStart, kStop));
+    CUDA_CHECK(cudaEventElapsedTime(&tE, eStart, eStop));
+    if (ms_kernel) *ms_kernel = tK;
+    if (ms_e2e)    *ms_e2e    = tE;
 
-    std::cout << "⏱️ Naive GPU total time (including memory ops): " << milliseconds << " ms\n";
-    std::cout << "📌 Compacted count: " << compactedCount << "\n";
-
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
+    // -------- cleanup --------
+    cudaEventDestroy(eStart); cudaEventDestroy(eStop);
+    cudaEventDestroy(kStart); cudaEventDestroy(kStop);
+    cudaFree(d_input); cudaFree(d_output);
 }
 
 

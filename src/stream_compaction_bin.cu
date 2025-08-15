@@ -26,6 +26,8 @@
 #include <thrust/scan.h>
 #include <thrust/sort.h>
 #include <thrust/copy.h>
+#include <thrust/reduce.h>
+#include <thrust/system/cuda/execution_policy.h>  // par.on(stream)
 
 #include <cuda_runtime.h>
 #include <vector>
@@ -43,6 +45,40 @@ extern float d_threshold;   ///< device-side predicate threshold
   } \
 } while(0)
 #endif
+
+// RAII：把已有 std::vector 的内存“临时注册”为 pinned，析构时自动取消注册
+struct PinnedGuard {
+    void*  p{nullptr};
+    size_t n{0};
+    bool   active{false};
+    PinnedGuard(void* ptr, size_t bytes) : p(ptr), n(bytes), active(false) {
+        if (p && n) {
+            cudaError_t e = cudaHostRegister(p, n, 0);
+            if (e == cudaSuccess) active = true;
+            else if (e != cudaErrorHostMemoryAlreadyRegistered) {
+                fprintf(stderr, "cudaHostRegister failed: %s\n", cudaGetErrorString(e));
+                std::exit(1);
+            } else {
+                active = true; // 已被注册也当作成功使用
+            }
+        }
+    }
+    ~PinnedGuard() {
+        if (active && p) {
+            cudaHostUnregister(p); // 同步在外面做，这里只是收尾
+        }
+    }
+    // 不允许拷贝
+    PinnedGuard(const PinnedGuard&) = delete;
+    PinnedGuard& operator=(const PinnedGuard&) = delete;
+    // 允许移动
+    PinnedGuard(PinnedGuard&& o) noexcept { p=o.p; n=o.n; active=o.active; o.p=nullptr; o.n=0; o.active=false; }
+    PinnedGuard& operator=(PinnedGuard&& o) noexcept {
+        if (this!=&o) { if(active&&p) cudaHostUnregister(p); p=o.p; n=o.n; active=o.active; o.p=nullptr; o.n=0; o.active=false; }
+        return *this;
+    }
+};
+
 
 // ────────────────────────────────────────────────────────────────
 // computeBinOffsets
@@ -392,6 +428,79 @@ __global__ void compactBinAtomic(const Point2D*  in,
  *
  * Measures both kernel-only and end-to-end timings using CUDA events.
  */
+// void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
+//                                  float                       threshold,
+//                                  int                         kBits,
+//                                  std::vector<Point2D>&       output,
+//                                  float&                      t_kernel_ms,
+//                                  float&                      t_total_ms)
+// {
+//     const int N = static_cast<int>(input.size());
+//     (void)kBits;  // mask is pre-computed but unused by this kernel
+
+//     /* Create CUDA events for timing ----------------------------------------*/
+//     cudaEvent_t t0, t1, k0, k1;
+//     cudaEventCreate(&t0); cudaEventCreate(&t1);
+//     cudaEventCreate(&k0); cudaEventCreate(&k1);
+//     cudaEventRecord(t0);
+
+//     /* Allocate buffers -----------------------------------------------------*/
+//     Point2D*  d_in        = nullptr;
+//     Point2D*  d_out       = nullptr;
+//     uint32_t* d_codes     = nullptr;
+//     int*      d_globalCnt = nullptr;
+
+//     cudaMalloc(&d_in,  N * sizeof(Point2D));
+//     cudaMalloc(&d_out, N * sizeof(Point2D));
+//     cudaMalloc(&d_codes, N * sizeof(uint32_t));
+//     cudaMalloc(&d_globalCnt, sizeof(int));
+//     cudaMemset(d_globalCnt, 0, sizeof(int));
+
+//     cudaMemcpy(d_in, input.data(),
+//                N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+//     /* Build Morton codes on host ------------------------------------------*/
+//     std::vector<uint32_t> h_codes(N);
+//     for (int i = 0; i < N; ++i)
+//         h_codes[i] = morton2D_encode(static_cast<int>(input[i].x),
+//                                      static_cast<int>(input[i].y));
+//     cudaMemcpy(d_codes, h_codes.data(),
+//                N * sizeof(uint32_t), cudaMemcpyHostToDevice);
+
+//     /* Launch kernel --------------------------------------------------------*/
+//     const int threads = 256;
+//     const int blocks  = (N + threads - 1) / threads;
+//     cudaEventRecord(k0);
+
+//     compactBinAtomic<<<blocks, threads>>>(d_in, d_out, d_globalCnt,
+//                                           d_codes, N, 0, threshold);
+
+//     cudaEventRecord(k1);
+//     cudaEventSynchronize(k1);
+
+//     /* Copy result count & elements back ------------------------------------*/
+//     int total = 0;
+//     cudaMemcpy(&total, d_globalCnt,
+//                sizeof(int), cudaMemcpyDeviceToHost);
+
+//     output.resize(total);
+//     if (total > 0)
+//         cudaMemcpy(output.data(), d_out,
+//                    total * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+//     /* Timings --------------------------------------------------------------*/
+//     cudaEventRecord(t1); cudaEventSynchronize(t1);
+//     cudaEventElapsedTime(&t_kernel_ms, k0, k1);
+//     cudaEventElapsedTime(&t_total_ms,  t0, t1);
+
+//     /* Cleanup --------------------------------------------------------------*/
+//     cudaEventDestroy(k0); cudaEventDestroy(k1);
+//     cudaEventDestroy(t0); cudaEventDestroy(t1);
+//     cudaFree(d_in); cudaFree(d_out);
+//     cudaFree(d_codes); cudaFree(d_globalCnt);
+// }
+
+
 void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
                                  float                       threshold,
                                  int                         kBits,
@@ -399,70 +508,170 @@ void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
                                  float&                      t_kernel_ms,
                                  float&                      t_total_ms)
 {
-    const int N = static_cast<int>(input.size());
-    (void)kBits;  // mask is pre-computed but unused by this kernel
+    const int N       = static_cast<int>(input.size());
+    const int numBins = 1 << kBits;
+    const int mask    = numBins - 1;
 
-    /* Create CUDA events for timing ----------------------------------------*/
-    cudaEvent_t t0, t1, k0, k1;
-    cudaEventCreate(&t0); cudaEventCreate(&t1);
-    cudaEventCreate(&k0); cudaEventCreate(&k1);
-    cudaEventRecord(t0);
+    // --- CUDA events（统一口径）
+    cudaEvent_t eStart, eStop, kStart, kStop;
+    cudaEventCreate(&eStart); cudaEventCreate(&eStop);
+    cudaEventCreate(&kStart); cudaEventCreate(&kStop);
 
-    /* Allocate buffers -----------------------------------------------------*/
-    Point2D*  d_in        = nullptr;
-    Point2D*  d_out       = nullptr;
-    uint32_t* d_codes     = nullptr;
-    int*      d_globalCnt = nullptr;
+    // --- 设备侧资源
+    Point2D*  d_in  = nullptr;
+    Point2D*  d_out = nullptr;
+    uint32_t* d_codes = nullptr;
 
-    cudaMalloc(&d_in,  N * sizeof(Point2D));
-    cudaMalloc(&d_out, N * sizeof(Point2D));
-    cudaMalloc(&d_codes, N * sizeof(uint32_t));
-    cudaMalloc(&d_globalCnt, sizeof(int));
-    cudaMemset(d_globalCnt, 0, sizeof(int));
+    CUDA_CHECK(cudaMalloc(&d_in,   N * sizeof(Point2D)));
+    CUDA_CHECK(cudaMalloc(&d_out,  N * sizeof(Point2D)));
+    CUDA_CHECK(cudaMalloc(&d_codes, N * sizeof(uint32_t)));
 
-    cudaMemcpy(d_in, input.data(),
-               N * sizeof(Point2D), cudaMemcpyHostToDevice);
+    // 设备端直方图/偏移/填充计数器
+    thrust::device_vector<int> d_binValid (numBins, 0);   // 每 bin 有效数
+    thrust::device_vector<int> d_binBase  (numBins+1, 0); // 每 bin 基址（exclusive）
+    thrust::device_vector<int> d_binFill  (numBins, 0);   // Pass-2 每 bin 运行计数器
 
-    /* Build Morton codes on host ------------------------------------------*/
-    std::vector<uint32_t> h_codes(N);
-    for (int i = 0; i < N; ++i)
-        h_codes[i] = morton2D_encode(static_cast<int>(input[i].x),
-                                     static_cast<int>(input[i].y));
-    cudaMemcpy(d_codes, h_codes.data(),
-               N * sizeof(uint32_t), cudaMemcpyHostToDevice);
-
-    /* Launch kernel --------------------------------------------------------*/
     const int threads = 256;
     const int blocks  = (N + threads - 1) / threads;
-    cudaEventRecord(k0);
 
-    compactBinAtomic<<<blocks, threads>>>(d_in, d_out, d_globalCnt,
-                                          d_codes, N, 0, threshold);
+    // --- E2E：从第一笔 H2D(input) 开始
+    CUDA_CHECK(cudaEventRecord(eStart, 0));
+    CUDA_CHECK(cudaMemcpyAsync(d_in, input.data(),
+                               N * sizeof(Point2D),
+                               cudaMemcpyHostToDevice, 0));
 
-    cudaEventRecord(k1);
-    cudaEventSynchronize(k1);
+    // --- Kernel-only：包含 生成codes + 计数 + 扫描 + 写回
+    CUDA_CHECK(cudaEventRecord(kStart, 0));
 
-    /* Copy result count & elements back ------------------------------------*/
-    int total = 0;
-    cudaMemcpy(&total, d_globalCnt,
-               sizeof(int), cudaMemcpyDeviceToHost);
+    // Pass-0: 生成 Morton codes（GPU）
+    genMortonCodesKernel<<<blocks, threads>>>(d_in, d_codes, N);
 
-    output.resize(total);
-    if (total > 0)
-        cudaMemcpy(output.data(), d_out,
-                   total * sizeof(Point2D), cudaMemcpyDeviceToHost);
+    // Pass-1: 统计每桶有效元素数
+    countValidPerBin_fromCodes<<<blocks, threads>>>(
+        d_in, d_codes,
+        thrust::raw_pointer_cast(d_binValid.data()),
+        N, mask, threshold);
 
-    /* Timings --------------------------------------------------------------*/
-    cudaEventRecord(t1); cudaEventSynchronize(t1);
-    cudaEventElapsedTime(&t_kernel_ms, k0, k1);
-    cudaEventElapsedTime(&t_total_ms,  t0, t1);
+    // Scan: 有效数做 exclusive_scan → bin 基址
+    thrust::exclusive_scan(d_binValid.begin(), d_binValid.end(),
+                           d_binBase.begin());
 
-    /* Cleanup --------------------------------------------------------------*/
-    cudaEventDestroy(k0); cudaEventDestroy(k1);
-    cudaEventDestroy(t0); cudaEventDestroy(t1);
-    cudaFree(d_in); cudaFree(d_out);
-    cudaFree(d_codes); cudaFree(d_globalCnt);
+    // 计算总有效数（用于回拷大小）
+    int totalValid = thrust::reduce(d_binValid.begin(), d_binValid.end(), 0, thrust::plus<int>());
+
+    // 写入 sentinel（binBase[numBins] = totalValid）
+    d_binBase[numBins] = totalValid;
+
+    // Pass-2: 按桶写出（每桶原子），out[binBase[b] + offset]
+    thrust::fill(d_binFill.begin(), d_binFill.end(), 0);
+    writePerBinAtomic_fromCodes<<<blocks, threads>>>(
+        d_in, d_codes, d_out,
+        thrust::raw_pointer_cast(d_binBase.data()),
+        thrust::raw_pointer_cast(d_binFill.data()),
+        N, mask, threshold);
+
+    CUDA_CHECK(cudaEventRecord(kStop, 0));
+    CUDA_CHECK(cudaEventSynchronize(kStop));  // 保证 kernel-only 结束
+
+    // --- 回拷结果（E2E 继续）
+    output.resize(totalValid);
+    if (totalValid > 0) {
+        CUDA_CHECK(cudaMemcpyAsync(output.data(), d_out,
+                                   totalValid * sizeof(Point2D),
+                                   cudaMemcpyDeviceToHost, 0));
+    }
+
+    CUDA_CHECK(cudaEventRecord(eStop, 0));
+    CUDA_CHECK(cudaEventSynchronize(eStop));
+
+    // --- 读计时
+    CUDA_CHECK(cudaEventElapsedTime(&t_kernel_ms, kStart, kStop));
+    CUDA_CHECK(cudaEventElapsedTime(&t_total_ms,  eStart, eStop));
+
+    // --- 清理
+    cudaEventDestroy(eStart); cudaEventDestroy(eStop);
+    cudaEventDestroy(kStart); cudaEventDestroy(kStop);
+    cudaFree(d_in); cudaFree(d_out); cudaFree(d_codes);
 }
+
+
+// use pinned memory for async H2D/D2H 
+// void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
+//                                  float                       threshold,
+//                                  int                         /*kBits*/,
+//                                  std::vector<Point2D>&       output,
+//                                  float&                      t_kernel_ms,
+//                                  float&                      t_total_ms)
+// {
+//     const int    N       = static_cast<int>(input.size());
+//     const size_t inBytes = N * sizeof(Point2D);
+
+//     // ---- Device ----
+//     Point2D *d_in=nullptr, *d_out=nullptr;
+//     int*     d_globalCnt=nullptr;
+//     CUDA_CHECK(cudaMalloc(&d_in,  inBytes));
+//     CUDA_CHECK(cudaMalloc(&d_out, inBytes));
+//     CUDA_CHECK(cudaMalloc(&d_globalCnt, sizeof(int)));
+//     CUDA_CHECK(cudaMemset(d_globalCnt, 0, sizeof(int)));
+
+//     // ---- Stream / events ----
+//     cudaStream_t s; CUDA_CHECK(cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking));
+//     cudaEvent_t e0,e1,k0,k1;
+//     CUDA_CHECK(cudaEventCreate(&e0)); CUDA_CHECK(cudaEventCreate(&e1));
+//     CUDA_CHECK(cudaEventCreate(&k0)); CUDA_CHECK(cudaEventCreate(&k1));
+
+//     // 直接把 input 的现有内存注册为 pinned（无额外拷贝）
+//     CUDA_CHECK(cudaHostRegister((void*)input.data(), inBytes, cudaHostRegisterDefault));
+
+//     // E2E start: H2D
+//     CUDA_CHECK(cudaEventRecord(e0, s));
+//     CUDA_CHECK(cudaMemcpyAsync(d_in, input.data(), inBytes, cudaMemcpyHostToDevice, s));
+
+//     // kernel-only
+//     const int threads = 256;
+//     const int blocks  = (N + threads - 1) / threads;
+//     CUDA_CHECK(cudaEventRecord(k0, s));
+//     compactBinAtomic<<<blocks, threads, 0, s>>>(d_in, d_out, d_globalCnt,
+//                                                 /*codes*/nullptr, N, /*mask*/0, threshold);
+//     CUDA_CHECK(cudaEventRecord(k1, s));
+//     CUDA_CHECK(cudaEventSynchronize(k1));
+
+//     // 先取回计数
+//     int total = 0;
+//     CUDA_CHECK(cudaMemcpyAsync(&total, d_globalCnt, sizeof(int),
+//                                cudaMemcpyDeviceToHost, s));
+//     CUDA_CHECK(cudaStreamSynchronize(s)); // 确保 total 可用
+
+//     // 准备 Host 输出：直接注册 output 的内存为 pinned，再做 D2H
+//     output.resize(total);
+//     if (total > 0) {
+//         const size_t outBytes = total * sizeof(Point2D);
+//         CUDA_CHECK(cudaHostRegister(output.data(), outBytes, cudaHostRegisterDefault));
+//         CUDA_CHECK(cudaMemcpyAsync(output.data(), d_out, outBytes,
+//                                    cudaMemcpyDeviceToHost, s));
+//         CUDA_CHECK(cudaEventRecord(e1, s));
+//         CUDA_CHECK(cudaEventSynchronize(e1));
+//         CUDA_CHECK(cudaHostUnregister(output.data()));
+//     } else {
+//         CUDA_CHECK(cudaEventRecord(e1, s));
+//         CUDA_CHECK(cudaEventSynchronize(e1));
+//     }
+
+//     // timings
+//     CUDA_CHECK(cudaEventElapsedTime(&t_kernel_ms, k0, k1));
+//     CUDA_CHECK(cudaEventElapsedTime(&t_total_ms,  e0, e1));
+
+//     // cleanup
+//     CUDA_CHECK(cudaHostUnregister((void*)input.data()));
+//     cudaEventDestroy(e0); cudaEventDestroy(e1);
+//     cudaEventDestroy(k0); cudaEventDestroy(k1);
+//     cudaStreamDestroy(s);
+//     cudaFree(d_in); cudaFree(d_out); cudaFree(d_globalCnt);
+// }
+
+
+
+
 
 // ────────────────────────────────────────────────────────────────
 // Device utility kernels (Plan A)
@@ -717,6 +926,334 @@ __global__ void scatterToBins(const Point2D*  in,
 //     cudaEventDestroy(t0); cudaEventDestroy(t1);
 // }
 
+// void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
+//                                     float                       threshold,
+//                                     int                         kBits,
+//                                     std::vector<Point2D>&       output,
+//                                     float&                      t_kernel_ms,
+//                                     float&                      t_total_ms,
+//                                     BinKernel                   kernelKind)
+// {
+//     const int N       = static_cast<int>(input.size());
+//     const int numBins = 1 << kBits;
+//     const int mask    = numBins - 1;
+
+//     /* CUDA events ----------------------------------------------------------*/
+//     cudaEvent_t t0, t1, k0, k1;
+//     cudaEventCreate(&t0); cudaEventCreate(&t1);
+//     cudaEventCreate(&k0); cudaEventCreate(&k1);
+//     cudaEventRecord(t0);
+
+//     /* Allocate raw buffers -------------------------------------------------*/
+//     Point2D*  d_in;   cudaMalloc(&d_in,  N * sizeof(Point2D));
+//     Point2D*  d_tmp;  cudaMalloc(&d_tmp, N * sizeof(Point2D));   // 仍作为“分桶后”的缓冲
+//     Point2D*  d_out;  cudaMalloc(&d_out, N * sizeof(Point2D));
+//     uint32_t* d_codes; cudaMalloc(&d_codes, N * sizeof(uint32_t));
+
+//     cudaMemcpy(d_in, input.data(),
+//                N * sizeof(Point2D), cudaMemcpyHostToDevice);
+
+//     thrust::device_vector<int> d_binSizes  (numBins,   0);
+//     thrust::device_vector<int> d_binOffsets(numBins+1, 0);
+
+//     /* Build Morton codes ---------------------------------------------------*/
+//     std::vector<uint32_t> h_codes(N);
+//     for (int i = 0; i < N; ++i)
+//         h_codes[i] = morton2D_encode(static_cast<int>(input[i].x),
+//                                      static_cast<int>(input[i].y));
+//     cudaMemcpy(d_codes, h_codes.data(),
+//                N * sizeof(uint32_t), cudaMemcpyHostToDevice);
+
+//     /* Pass 1: histogram ----------------------------------------------------*/
+//     const int threads = 256;
+//     const int blocks  = (N + threads - 1) / threads;
+//     histogramBins<<<blocks,threads>>>(d_codes,
+//         thrust::raw_pointer_cast(d_binSizes.data()), N, mask);
+
+//     /* Exclusive scan → offsets --------------------------------------------*/
+//     thrust::exclusive_scan(d_binSizes.begin(), d_binSizes.end(),
+//                            d_binOffsets.begin());
+//     d_binOffsets[numBins] = N;   // sentinel
+
+//     /* Pass 2: scatter  (REPLACED) -----------------------------------------*/
+//     // 原先是：thrust::device_vector<int> d_binCursor = d_binOffsets; // 作为起始写指针
+//     // 现在我们改为：先建“dst->src”索引映射，然后做一次顺序写的聚集拷贝。
+
+//     // 2.1 分配临时区：每bin计数器(清零) + 目标索引映射 [N]
+//     thrust::device_vector<int> d_binCursor(numBins, 0);
+//     thrust::device_vector<int> d_srcIndexForDest(N, -1);
+
+//     cudaEventRecord(k0);
+
+//     //2.2 为每个元素分配它在“分桶后数组”里的 dst 位置，并只写入其来源 src 下标
+//     buildDestMapKernel<<<blocks, threads>>>(
+//         d_codes,
+//         thrust::raw_pointer_cast(d_binOffsets.data()),
+//         thrust::raw_pointer_cast(d_binCursor.data()),
+//         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+//         N, mask);
+//     // size_t smemBytes = static_cast<size_t>(numBins) * 3 * sizeof(int);
+//     // buildDestMapKernel<<<blocks, threads, smemBytes>>>(
+//     //     d_codes,
+//     //     thrust::raw_pointer_cast(d_binOffsets.data()),
+//     //     thrust::raw_pointer_cast(d_binCursor.data()),
+//     //     thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+//     //     N, mask, numBins);
+
+//     // 2.3 聚集拷贝：把 d_in 按 d_srcIndexForDest 的映射搬到 d_tmp（顺序写，写入合并）
+//     gatherCopyKernel<<<blocks, threads>>>(
+//         d_in, d_tmp,
+//         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+//         N);
+
+//     cudaEventRecord(k1);
+//     cudaEventSynchronize(k1);
+
+//     ////////////////////////////////////////////////////////////////////////////////////////////////
+//     // shared memory blocked version (ncu-safe)  – 目前不启用，因为 blocked 版本在 ncu 上会有 LaunchFailed
+//     ////////////////////////////////////////////////////////////////////////////////////////////////
+//     //  /* Pass 2: scatter (ncu-safe) -----------------------------------------*/
+
+//     // // 2.1 临时区：每bin计数器(清零) + 目标索引映射 [N]
+//     // thrust::device_vector<int> d_binCursor(numBins, 0);
+//     // thrust::device_vector<int> d_srcIndexForDest(N, -1);
+
+//     // // 2.2 blocked 版本需要的动态共享内存（三个 numBins 的 int 数组）
+//     // const size_t smemBytes = static_cast<size_t>(numBins) * 3 * sizeof(int);
+
+//     // // 2.3 设备默认共享内存上限（通常 48KB）
+//     // int dev = 0;
+//     // cudaGetDevice(&dev);
+//     // int maxDefault = 0;
+//     // cudaDeviceGetAttribute(&maxDefault, cudaDevAttrMaxSharedMemoryPerBlock, dev);
+
+//     // // ⚠️ 为了让 ncu 一定稳定：只在 smemBytes ≤ 默认上限（~48KB）时使用 blocked 版本
+//     // const bool useBlocked = (smemBytes <= static_cast<size_t>(maxDefault));
+
+//     // // ⏱ 计时开始（包含 buildDestMap + gatherCopy）
+//     // cudaEventRecord(k0);
+
+//     // if (useBlocked) {
+//     //     // 不走 opt-in，直接按默认上限跑 blocked
+//     //     buildDestMapKernel<<<blocks, threads, smemBytes>>>(
+//     //         d_codes,
+//     //         thrust::raw_pointer_cast(d_binOffsets.data()),
+//     //         thrust::raw_pointer_cast(d_binCursor.data()),
+//     //         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+//     //         N, mask, numBins);
+//     // } else {
+//     //     // 超过 48KB 就退回 naive，保证 ncu 不会 LaunchFailed
+//     //     buildDestMapKernel_naive<<<blocks, threads>>>(
+//     //         d_codes,
+//     //         thrust::raw_pointer_cast(d_binOffsets.data()),
+//     //         thrust::raw_pointer_cast(d_binCursor.data()),
+//     //         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+//     //         N, mask);
+//     // }
+
+//     // // 2.4 聚集拷贝（顺序写，合并良好）
+//     // gatherCopyKernel<<<blocks, threads>>>(
+//     //     d_in, d_tmp,
+//     //     thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+//     //     N);
+
+//     // // ⏱ 计时结束
+//     // cudaEventRecord(k1);
+//     // cudaEventSynchronize(k1);
+
+//     /* Copy metadata to host -----------------------------------------------*/
+//     std::vector<int> h_offsets(numBins+1);
+//     std::vector<int> h_sizes  (numBins);
+//     thrust::copy(d_binOffsets.begin(), d_binOffsets.end(), h_offsets.begin());
+//     thrust::copy(d_binSizes.begin(),   d_binSizes.end(),   h_sizes.begin());
+
+//     /* Per-bin compaction ---------------------------------------------------*/
+//     int totalOut = 0;
+//     for (int b = 0; b < numBins; ++b) {
+//         int off = h_offsets[b];
+//         int sz  = h_sizes[b];
+//         if (sz == 0) continue;
+
+//         Point2D* binIn  = d_tmp + off;        // 注意：仍然从 d_tmp 的分段读
+//         Point2D* binOut = d_out + totalOut;
+//         int      h_cnt  = 0;
+
+//         compactOneBin(binIn, binOut, sz, threshold, h_cnt, kernelKind);
+//         totalOut += h_cnt;
+//     }
+
+//     /* Copy final output ----------------------------------------------------*/
+//     output.resize(totalOut);
+//     cudaMemcpy(output.data(), d_out,
+//                totalOut * sizeof(Point2D), cudaMemcpyDeviceToHost);
+
+//     /* Timing ---------------------------------------------------------------*/
+//     cudaEventRecord(t1); cudaEventSynchronize(t1);
+//     cudaEventElapsedTime(&t_kernel_ms, k0, k1);   // 现在包括 buildDestMap + gatherCopy 两个 kernel
+//     cudaEventElapsedTime(&t_total_ms,  t0, t1);
+
+//     /* Cleanup --------------------------------------------------------------*/
+//     cudaFree(d_in); cudaFree(d_tmp); cudaFree(d_out); cudaFree(d_codes);
+//     cudaEventDestroy(k0); cudaEventDestroy(k1);
+//     cudaEventDestroy(t0); cudaEventDestroy(t1);
+// }
+
+// void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
+//                                     float                       threshold,
+//                                     int                         kBits,
+//                                     std::vector<Point2D>&       output,
+//                                     float&                      t_kernel_ms,
+//                                     float&                      t_total_ms,
+//                                     BinKernel                   kernelKind)
+// {
+//     const int N       = static_cast<int>(input.size());
+//     const int numBins = 1 << kBits;
+//     const int mask    = numBins - 1;
+
+//     // ---------- Events ----------
+//     cudaEvent_t e0,e1,k0,k1, eh0,eh1, es1, esc0,esc1, ec0,ec1;
+//     cudaEventCreate(&e0);  cudaEventCreate(&e1);
+//     cudaEventCreate(&k0);  cudaEventCreate(&k1);
+//     cudaEventCreate(&eh0); cudaEventCreate(&eh1);   // histogram window
+//     cudaEventCreate(&es1);                          // scan done
+//     cudaEventCreate(&esc0); cudaEventCreate(&esc1); // scatter window
+//     cudaEventCreate(&ec0);  cudaEventCreate(&ec1);  // per-bin compaction
+
+//     // ---------- Buffers ----------
+//     Point2D*  d_in  = nullptr;
+//     Point2D*  d_tmp = nullptr;    // scattered(binned) buffer
+//     Point2D*  d_out = nullptr;
+//     uint32_t* d_codes = nullptr;
+
+//     cudaMalloc(&d_in,  N * sizeof(Point2D));
+//     cudaMalloc(&d_tmp, N * sizeof(Point2D));
+//     cudaMalloc(&d_out, N * sizeof(Point2D));
+//     cudaMalloc(&d_codes, N * sizeof(uint32_t));
+
+//     // Host → Device : input （E2E 计时包含）
+//     cudaEventRecord(e0, 0);
+//     cudaMemcpyAsync(d_in, input.data(),
+//                     N * sizeof(Point2D), cudaMemcpyHostToDevice, 0);
+
+//     // Morton codes 在主机端生成（不计入 E2E）；只把 H2D(codes) 计入 E2E
+//     std::vector<uint32_t> h_codes(N);
+//     for (int i = 0; i < N; ++i) {
+//         h_codes[i] = morton2D_encode(static_cast<int>(input[i].x),
+//                                      static_cast<int>(input[i].y));
+//     }
+//     cudaMemcpyAsync(d_codes, h_codes.data(),
+//                     N * sizeof(uint32_t), cudaMemcpyHostToDevice, 0);
+
+//     // ---------- Device metadata ----------
+//     thrust::device_vector<int> d_binSizes  (numBins,   0);
+//     thrust::device_vector<int> d_binOffsets(numBins+1, 0);
+
+//     const int threads = 256;
+//     const int blocks  = (N + threads - 1) / threads;
+
+//     // ===== Kernel-only 计时从 histogram 前开始 =====
+//     cudaEventRecord(k0, 0);
+
+//     // Pass-1: histogram
+//     cudaEventRecord(eh0, 0);
+//     histogramBins<<<blocks,threads>>>(d_codes,
+//         thrust::raw_pointer_cast(d_binSizes.data()), N, mask);
+//     cudaEventRecord(eh1, 0);
+
+//     // scan → offsets
+//     thrust::exclusive_scan(d_binSizes.begin(), d_binSizes.end(),
+//                            d_binOffsets.begin());
+//     d_binOffsets[numBins] = N;   // sentinel
+//     cudaEventRecord(es1, 0);
+
+//     // Pass-2: scatter (buildDestMap + gatherCopy)
+//     thrust::device_vector<int> d_binCursor(numBins, 0);
+//     thrust::device_vector<int> d_srcIndexForDest(N, -1);
+
+//     cudaEventRecord(esc0, 0);
+//     buildDestMapKernel<<<blocks, threads>>>(
+//         d_codes,
+//         thrust::raw_pointer_cast(d_binOffsets.data()),
+//         thrust::raw_pointer_cast(d_binCursor.data()),
+//         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+//         N, mask);
+
+//     gatherCopyKernel<<<blocks, threads>>>(
+//         d_in, d_tmp,
+//         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+//         N);
+//     cudaEventRecord(esc1, 0);
+
+//     // 取回 offsets/sizes 到主机用于 per-bin 调度（很小的 D2H，影响可忽略）
+//     std::vector<int> h_offsets(numBins+1);
+//     std::vector<int> h_sizes  (numBins);
+//     thrust::copy(d_binOffsets.begin(), d_binOffsets.end(), h_offsets.begin());
+//     thrust::copy(d_binSizes.begin(),   d_binSizes.end(),   h_sizes.begin());
+
+//     // Per-bin compaction（纳入 kernel-only）
+//     int totalOut = 0;
+//     cudaEventRecord(ec0, 0);
+//     for (int b = 0; b < numBins; ++b) {
+//         int off = h_offsets[b];
+//         int sz  = h_sizes[b];
+//         if (sz == 0) continue;
+
+//         Point2D* binIn  = d_tmp + off;
+//         Point2D* binOut = d_out + totalOut;
+//         int      h_cnt  = 0;
+
+//         compactOneBin(binIn, binOut, sz, threshold, h_cnt, kernelKind);
+//         totalOut += h_cnt;
+//     }
+//     cudaDeviceSynchronize();   // 保证所有 bin 的 kernel 都结束
+//     cudaEventRecord(ec1, 0);
+
+//     // ===== Kernel-only 截止到此 =====
+//     cudaEventRecord(k1, 0);
+//     cudaEventSynchronize(k1);
+
+//     // 最终输出回拷（E2E 包含）
+//     output.resize(totalOut);
+//     if (totalOut > 0) {
+//         cudaMemcpyAsync(output.data(), d_out,
+//                         totalOut * sizeof(Point2D), cudaMemcpyDeviceToHost, 0);
+//     }
+
+//     // E2E 结束
+//     cudaEventRecord(e1, 0);
+//     cudaEventSynchronize(e1);
+
+//     // ---------- Timings ----------
+//     cudaEventElapsedTime(&t_kernel_ms, k0, k1);
+//     cudaEventElapsedTime(&t_total_ms,  e0, e1);
+
+//     float t_hist=0.f, t_scan=0.f, t_scatter=0.f, t_comp=0.f;
+//     cudaEventElapsedTime(&t_hist,    eh0,  eh1);
+//     cudaEventElapsedTime(&t_scan,    eh1,  es1);
+//     cudaEventElapsedTime(&t_scatter, esc0, esc1);
+//     cudaEventElapsedTime(&t_comp,    ec0,  ec1);
+
+//     std::cout << "   [Plan-A breakdown] "
+//               << "hist "    << t_hist
+//               << " ms, scan "    << t_scan
+//               << " ms, scatter " << t_scatter
+//               << " ms, compact " << t_comp << " ms\n";
+
+//     // ---------- Cleanup ----------
+//     cudaEventDestroy(e0);  cudaEventDestroy(e1);
+//     cudaEventDestroy(k0);  cudaEventDestroy(k1);
+//     cudaEventDestroy(eh0); cudaEventDestroy(eh1);
+//     cudaEventDestroy(es1);
+//     cudaEventDestroy(esc0); cudaEventDestroy(esc1);
+//     cudaEventDestroy(ec0);  cudaEventDestroy(ec1);
+
+//     cudaFree(d_in);
+//     cudaFree(d_tmp);
+//     cudaFree(d_out);
+//     cudaFree(d_codes);
+// }
+
+// gpu generated morton codes, no longer copy from host
 void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
                                     float                       threshold,
                                     int                         kBits,
@@ -729,165 +1266,286 @@ void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
     const int numBins = 1 << kBits;
     const int mask    = numBins - 1;
 
-    /* CUDA events ----------------------------------------------------------*/
-    cudaEvent_t t0, t1, k0, k1;
-    cudaEventCreate(&t0); cudaEventCreate(&t1);
-    cudaEventCreate(&k0); cudaEventCreate(&k1);
-    cudaEventRecord(t0);
+    // ---------- Events ----------
+    cudaEvent_t e0,e1,k0,k1, ecodes0,ecodes1, eh0,eh1, es1, esc0,esc1, ec0,ec1;
+    cudaEventCreate(&e0);     cudaEventCreate(&e1);
+    cudaEventCreate(&k0);     cudaEventCreate(&k1);
+    cudaEventCreate(&ecodes0);cudaEventCreate(&ecodes1); // codes (GPU)
+    cudaEventCreate(&eh0);    cudaEventCreate(&eh1);     // histogram
+    cudaEventCreate(&es1);                                // scan done
+    cudaEventCreate(&esc0);   cudaEventCreate(&esc1);    // scatter
+    cudaEventCreate(&ec0);    cudaEventCreate(&ec1);     // per-bin compaction
 
-    /* Allocate raw buffers -------------------------------------------------*/
-    Point2D*  d_in;   cudaMalloc(&d_in,  N * sizeof(Point2D));
-    Point2D*  d_tmp;  cudaMalloc(&d_tmp, N * sizeof(Point2D));   // 仍作为“分桶后”的缓冲
-    Point2D*  d_out;  cudaMalloc(&d_out, N * sizeof(Point2D));
-    uint32_t* d_codes; cudaMalloc(&d_codes, N * sizeof(uint32_t));
+    // ---------- Buffers ----------
+    Point2D*  d_in  = nullptr;
+    Point2D*  d_tmp = nullptr;    // scattered(binned) buffer
+    Point2D*  d_out = nullptr;
+    uint32_t* d_codes = nullptr;
 
-    cudaMemcpy(d_in, input.data(),
-               N * sizeof(Point2D), cudaMemcpyHostToDevice);
+    cudaMalloc(&d_in,    N * sizeof(Point2D));
+    cudaMalloc(&d_tmp,   N * sizeof(Point2D));
+    cudaMalloc(&d_out,   N * sizeof(Point2D));
+    cudaMalloc(&d_codes, N * sizeof(uint32_t));
 
+    // Host → Device : input （E2E 计时包含）
+    cudaEventRecord(e0, 0);
+    cudaMemcpyAsync(d_in, input.data(),
+                    N * sizeof(Point2D), cudaMemcpyHostToDevice, 0);
+
+    // ---------- Device metadata ----------
     thrust::device_vector<int> d_binSizes  (numBins,   0);
     thrust::device_vector<int> d_binOffsets(numBins+1, 0);
 
-    /* Build Morton codes ---------------------------------------------------*/
-    std::vector<uint32_t> h_codes(N);
-    for (int i = 0; i < N; ++i)
-        h_codes[i] = morton2D_encode(static_cast<int>(input[i].x),
-                                     static_cast<int>(input[i].y));
-    cudaMemcpy(d_codes, h_codes.data(),
-               N * sizeof(uint32_t), cudaMemcpyHostToDevice);
-
-    /* Pass 1: histogram ----------------------------------------------------*/
     const int threads = 256;
     const int blocks  = (N + threads - 1) / threads;
+
+    // ===== Kernel-only 计时从 codes 前开始 =====
+    cudaEventRecord(k0, 0);
+
+    // Pass-0: 在 GPU 上生成 Morton codes（不再在 CPU 侧构造/拷贝）
+    cudaEventRecord(ecodes0, 0);
+    genMortonCodesKernel<<<blocks, threads>>>(d_in, d_codes, N);
+    cudaEventRecord(ecodes1, 0);
+
+    // Pass-1: histogram
+    cudaEventRecord(eh0, 0);
     histogramBins<<<blocks,threads>>>(d_codes,
         thrust::raw_pointer_cast(d_binSizes.data()), N, mask);
+    cudaEventRecord(eh1, 0);
 
-    /* Exclusive scan → offsets --------------------------------------------*/
+    // scan → offsets
     thrust::exclusive_scan(d_binSizes.begin(), d_binSizes.end(),
                            d_binOffsets.begin());
     d_binOffsets[numBins] = N;   // sentinel
+    cudaEventRecord(es1, 0);
 
-    /* Pass 2: scatter  (REPLACED) -----------------------------------------*/
-    // 原先是：thrust::device_vector<int> d_binCursor = d_binOffsets; // 作为起始写指针
-    // 现在我们改为：先建“dst->src”索引映射，然后做一次顺序写的聚集拷贝。
-
-    // 2.1 分配临时区：每bin计数器(清零) + 目标索引映射 [N]
+    // Pass-2: scatter (buildDestMap + gatherCopy)
     thrust::device_vector<int> d_binCursor(numBins, 0);
     thrust::device_vector<int> d_srcIndexForDest(N, -1);
 
-    cudaEventRecord(k0);
-
-    //2.2 为每个元素分配它在“分桶后数组”里的 dst 位置，并只写入其来源 src 下标
+    cudaEventRecord(esc0, 0);
     buildDestMapKernel<<<blocks, threads>>>(
         d_codes,
         thrust::raw_pointer_cast(d_binOffsets.data()),
         thrust::raw_pointer_cast(d_binCursor.data()),
         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
         N, mask);
-    // size_t smemBytes = static_cast<size_t>(numBins) * 3 * sizeof(int);
-    // buildDestMapKernel<<<blocks, threads, smemBytes>>>(
-    //     d_codes,
-    //     thrust::raw_pointer_cast(d_binOffsets.data()),
-    //     thrust::raw_pointer_cast(d_binCursor.data()),
-    //     thrust::raw_pointer_cast(d_srcIndexForDest.data()),
-    //     N, mask, numBins);
 
-    // 2.3 聚集拷贝：把 d_in 按 d_srcIndexForDest 的映射搬到 d_tmp（顺序写，写入合并）
     gatherCopyKernel<<<blocks, threads>>>(
         d_in, d_tmp,
         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
         N);
+    cudaEventRecord(esc1, 0);
 
-    cudaEventRecord(k1);
-    cudaEventSynchronize(k1);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // shared memory blocked version (ncu-safe)  – 目前不启用，因为 blocked 版本在 ncu 上会有 LaunchFailed
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //  /* Pass 2: scatter (ncu-safe) -----------------------------------------*/
-
-    // // 2.1 临时区：每bin计数器(清零) + 目标索引映射 [N]
-    // thrust::device_vector<int> d_binCursor(numBins, 0);
-    // thrust::device_vector<int> d_srcIndexForDest(N, -1);
-
-    // // 2.2 blocked 版本需要的动态共享内存（三个 numBins 的 int 数组）
-    // const size_t smemBytes = static_cast<size_t>(numBins) * 3 * sizeof(int);
-
-    // // 2.3 设备默认共享内存上限（通常 48KB）
-    // int dev = 0;
-    // cudaGetDevice(&dev);
-    // int maxDefault = 0;
-    // cudaDeviceGetAttribute(&maxDefault, cudaDevAttrMaxSharedMemoryPerBlock, dev);
-
-    // // ⚠️ 为了让 ncu 一定稳定：只在 smemBytes ≤ 默认上限（~48KB）时使用 blocked 版本
-    // const bool useBlocked = (smemBytes <= static_cast<size_t>(maxDefault));
-
-    // // ⏱ 计时开始（包含 buildDestMap + gatherCopy）
-    // cudaEventRecord(k0);
-
-    // if (useBlocked) {
-    //     // 不走 opt-in，直接按默认上限跑 blocked
-    //     buildDestMapKernel<<<blocks, threads, smemBytes>>>(
-    //         d_codes,
-    //         thrust::raw_pointer_cast(d_binOffsets.data()),
-    //         thrust::raw_pointer_cast(d_binCursor.data()),
-    //         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
-    //         N, mask, numBins);
-    // } else {
-    //     // 超过 48KB 就退回 naive，保证 ncu 不会 LaunchFailed
-    //     buildDestMapKernel_naive<<<blocks, threads>>>(
-    //         d_codes,
-    //         thrust::raw_pointer_cast(d_binOffsets.data()),
-    //         thrust::raw_pointer_cast(d_binCursor.data()),
-    //         thrust::raw_pointer_cast(d_srcIndexForDest.data()),
-    //         N, mask);
-    // }
-
-    // // 2.4 聚集拷贝（顺序写，合并良好）
-    // gatherCopyKernel<<<blocks, threads>>>(
-    //     d_in, d_tmp,
-    //     thrust::raw_pointer_cast(d_srcIndexForDest.data()),
-    //     N);
-
-    // // ⏱ 计时结束
-    // cudaEventRecord(k1);
-    // cudaEventSynchronize(k1);
-
-    /* Copy metadata to host -----------------------------------------------*/
+    // 取回 offsets/sizes 到主机用于 per-bin 调度
     std::vector<int> h_offsets(numBins+1);
     std::vector<int> h_sizes  (numBins);
     thrust::copy(d_binOffsets.begin(), d_binOffsets.end(), h_offsets.begin());
     thrust::copy(d_binSizes.begin(),   d_binSizes.end(),   h_sizes.begin());
 
-    /* Per-bin compaction ---------------------------------------------------*/
+    // Per-bin compaction（纳入 kernel-only）
     int totalOut = 0;
+    cudaEventRecord(ec0, 0);
     for (int b = 0; b < numBins; ++b) {
         int off = h_offsets[b];
         int sz  = h_sizes[b];
         if (sz == 0) continue;
 
-        Point2D* binIn  = d_tmp + off;        // 注意：仍然从 d_tmp 的分段读
+        Point2D* binIn  = d_tmp + off;
         Point2D* binOut = d_out + totalOut;
         int      h_cnt  = 0;
 
         compactOneBin(binIn, binOut, sz, threshold, h_cnt, kernelKind);
         totalOut += h_cnt;
     }
+    cudaDeviceSynchronize();   // 保证所有 bin 的 kernel 都结束
+    cudaEventRecord(ec1, 0);
 
-    /* Copy final output ----------------------------------------------------*/
+    // ===== Kernel-only 截止到此 =====
+    cudaEventRecord(k1, 0);
+    cudaEventSynchronize(k1);
+
+    // 最终输出回拷（E2E 包含）
     output.resize(totalOut);
-    cudaMemcpy(output.data(), d_out,
-               totalOut * sizeof(Point2D), cudaMemcpyDeviceToHost);
+    if (totalOut > 0) {
+        cudaMemcpyAsync(output.data(), d_out,
+                        totalOut * sizeof(Point2D), cudaMemcpyDeviceToHost, 0);
+    }
 
-    /* Timing ---------------------------------------------------------------*/
-    cudaEventRecord(t1); cudaEventSynchronize(t1);
-    cudaEventElapsedTime(&t_kernel_ms, k0, k1);   // 现在包括 buildDestMap + gatherCopy 两个 kernel
-    cudaEventElapsedTime(&t_total_ms,  t0, t1);
+    // E2E 结束
+    cudaEventRecord(e1, 0);
+    cudaEventSynchronize(e1);
 
-    /* Cleanup --------------------------------------------------------------*/
-    cudaFree(d_in); cudaFree(d_tmp); cudaFree(d_out); cudaFree(d_codes);
-    cudaEventDestroy(k0); cudaEventDestroy(k1);
-    cudaEventDestroy(t0); cudaEventDestroy(t1);
+    // ---------- Timings ----------
+    cudaEventElapsedTime(&t_kernel_ms, k0, k1);
+    cudaEventElapsedTime(&t_total_ms,  e0, e1);
+
+    float t_codes=0.f, t_hist=0.f, t_scan=0.f, t_scatter=0.f, t_comp=0.f;
+    cudaEventElapsedTime(&t_codes,   ecodes0, ecodes1);
+    cudaEventElapsedTime(&t_hist,    eh0,     eh1);
+    cudaEventElapsedTime(&t_scan,    eh1,     es1);
+    cudaEventElapsedTime(&t_scatter, esc0,    esc1);
+    cudaEventElapsedTime(&t_comp,    ec0,     ec1);
+
+    std::cout << "   [Plan-A breakdown] "
+              << "codes "   << t_codes
+              << " ms, hist "    << t_hist
+              << " ms, scan "    << t_scan
+              << " ms, scatter " << t_scatter
+              << " ms, compact " << t_comp << " ms\n";
+
+    // ---------- Cleanup ----------
+    cudaEventDestroy(e0);     cudaEventDestroy(e1);
+    cudaEventDestroy(k0);     cudaEventDestroy(k1);
+    cudaEventDestroy(ecodes0);cudaEventDestroy(ecodes1);
+    cudaEventDestroy(eh0);    cudaEventDestroy(eh1);
+    cudaEventDestroy(es1);
+    cudaEventDestroy(esc0);   cudaEventDestroy(esc1);
+    cudaEventDestroy(ec0);    cudaEventDestroy(ec1);
+
+    cudaFree(d_in);
+    cudaFree(d_tmp);
+    cudaFree(d_out);
+    cudaFree(d_codes);
 }
+
+// use 自建流 & 事件，避免默认流的隐式同步
+// void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
+//                                     float                       threshold,
+//                                     int                         kBits,
+//                                     std::vector<Point2D>&       output,
+//                                     float&                      t_kernel_ms,
+//                                     float&                      t_total_ms,
+//                                     BinKernel                   kernelKind)
+// {
+//     const int    N       = static_cast<int>(input.size());
+//     const int    numBins = 1 << kBits;
+//     const int    mask    = numBins - 1;
+//     const size_t inBytes = N * sizeof(Point2D);
+
+//     // ---- Device ----
+//     Point2D *d_in=nullptr, *d_tmp=nullptr, *d_out=nullptr;
+//     uint32_t* d_codes=nullptr;
+//     CUDA_CHECK(cudaMalloc(&d_in,    inBytes));
+//     CUDA_CHECK(cudaMalloc(&d_tmp,   inBytes));
+//     CUDA_CHECK(cudaMalloc(&d_out,   inBytes));
+//     CUDA_CHECK(cudaMalloc(&d_codes, N * sizeof(uint32_t)));
+
+//     thrust::device_vector<int> d_binSizes  (numBins,   0);
+//     thrust::device_vector<int> d_binOffsets(numBins+1, 0);
+
+//     // ---- Stream / events ----
+//     cudaStream_t s; CUDA_CHECK(cudaStreamCreateWithFlags(&s, cudaStreamNonBlocking));
+//     cudaEvent_t e0,e1,k0,k1, ec0,ec1, eh0,eh1, es1, esc0,esc1;
+//     CUDA_CHECK(cudaEventCreate(&e0));   CUDA_CHECK(cudaEventCreate(&e1));
+//     CUDA_CHECK(cudaEventCreate(&k0));   CUDA_CHECK(cudaEventCreate(&k1));
+//     CUDA_CHECK(cudaEventCreate(&ec0));  CUDA_CHECK(cudaEventCreate(&ec1));
+//     CUDA_CHECK(cudaEventCreate(&eh0));  CUDA_CHECK(cudaEventCreate(&eh1));
+//     CUDA_CHECK(cudaEventCreate(&es1));
+//     CUDA_CHECK(cudaEventCreate(&esc0)); CUDA_CHECK(cudaEventCreate(&esc1));
+
+//     // 注册 input 为 pinned，并 H2D
+//     CUDA_CHECK(cudaHostRegister((void*)input.data(), inBytes, cudaHostRegisterDefault));
+//     CUDA_CHECK(cudaEventRecord(e0, s));
+//     CUDA_CHECK(cudaMemcpyAsync(d_in, input.data(), inBytes, cudaMemcpyHostToDevice, s));
+
+//     const int threads = 256;
+//     const int blocks  = (N + threads - 1) / threads;
+
+//     // ===== kernel-only from codes =====
+//     CUDA_CHECK(cudaEventRecord(k0, s));
+
+//     CUDA_CHECK(cudaEventRecord(ec0, s));
+//     genMortonCodesKernel<<<blocks, threads, 0, s>>>(d_in, d_codes, N);
+//     CUDA_CHECK(cudaEventRecord(ec1, s));
+
+//     CUDA_CHECK(cudaEventRecord(eh0, s));
+//     histogramBins<<<blocks, threads, 0, s>>>(d_codes,
+//         thrust::raw_pointer_cast(d_binSizes.data()), N, mask);
+//     CUDA_CHECK(cudaEventRecord(eh1, s));
+
+//     thrust::exclusive_scan(d_binSizes.begin(), d_binSizes.end(),
+//                            d_binOffsets.begin());
+//     {   // sentinel d_binOffsets[numBins] = N
+//         int N_host = N;
+//         CUDA_CHECK(cudaMemcpy(thrust::raw_pointer_cast(d_binOffsets.data())+numBins,
+//                               &N_host, sizeof(int), cudaMemcpyHostToDevice));
+//     }
+//     CUDA_CHECK(cudaEventRecord(es1, s));
+
+//     // 回到 scatterToBins（你这块卡更快）
+//     thrust::device_vector<int> d_binCursor = d_binOffsets;
+//     CUDA_CHECK(cudaEventRecord(esc0, s));
+//     scatterToBins<<<blocks, threads, 0, s>>>(d_in, d_tmp, d_codes,
+//         thrust::raw_pointer_cast(d_binCursor.data()), N, mask);
+//     CUDA_CHECK(cudaEventRecord(esc1, s));
+
+//     // 元数据回主机
+//     std::vector<int> h_offsets(numBins+1);
+//     std::vector<int> h_sizes  (numBins);
+//     thrust::copy(d_binOffsets.begin(), d_binOffsets.end(), h_offsets.begin());
+//     thrust::copy(d_binSizes.begin(),   d_binSizes.end(),   h_sizes.begin());
+
+//     // per-bin compaction
+//     int totalOut = 0;
+//     for (int b = 0; b < numBins; ++b) {
+//         int off = h_offsets[b], sz = h_sizes[b];
+//         if (sz == 0) continue;
+//         Point2D* binIn  = d_tmp + off;
+//         Point2D* binOut = d_out + totalOut;
+//         int      h_cnt  = 0;
+//         compactOneBin(binIn, binOut, sz, threshold, h_cnt, kernelKind);
+//         totalOut += h_cnt;
+//     }
+//     CUDA_CHECK(cudaDeviceSynchronize());
+//     CUDA_CHECK(cudaEventRecord(k1, s));
+//     CUDA_CHECK(cudaEventSynchronize(k1));
+
+//     // D2H（把 output 自己注册为 pinned）
+//     output.resize(totalOut);
+//     if (totalOut > 0) {
+//         const size_t outBytes = totalOut * sizeof(Point2D);
+//         CUDA_CHECK(cudaHostRegister(output.data(), outBytes, cudaHostRegisterDefault));
+//         CUDA_CHECK(cudaMemcpyAsync(output.data(), d_out, outBytes,
+//                                    cudaMemcpyDeviceToHost, s));
+//         CUDA_CHECK(cudaEventRecord(e1, s));
+//         CUDA_CHECK(cudaEventSynchronize(e1));
+//         CUDA_CHECK(cudaHostUnregister(output.data()));
+//     } else {
+//         CUDA_CHECK(cudaEventRecord(e1, s));
+//         CUDA_CHECK(cudaEventSynchronize(e1));
+//     }
+
+//     // timings
+//     CUDA_CHECK(cudaEventElapsedTime(&t_kernel_ms, k0, k1));
+//     CUDA_CHECK(cudaEventElapsedTime(&t_total_ms,  e0, e1));
+
+//     float t_codes=0.f,t_hist=0.f,t_scan=0.f,t_scatter=0.f;
+//     CUDA_CHECK(cudaEventElapsedTime(&t_codes,   ec0,  ec1));
+//     CUDA_CHECK(cudaEventElapsedTime(&t_hist,    eh0,  eh1));
+//     CUDA_CHECK(cudaEventElapsedTime(&t_scan,    eh1,  es1));
+//     CUDA_CHECK(cudaEventElapsedTime(&t_scatter, esc0, esc1));
+//     std::cout << "   [Plan-A breakdown] "
+//               << "codes "   << t_codes
+//               << " ms, hist "    << t_hist
+//               << " ms, scan "    << t_scan
+//               << " ms, scatter " << t_scatter << " ms\n";
+
+//     // cleanup
+//     CUDA_CHECK(cudaHostUnregister((void*)input.data()));
+//     cudaEventDestroy(e0);  cudaEventDestroy(e1);
+//     cudaEventDestroy(k0);  cudaEventDestroy(k1);
+//     cudaEventDestroy(ec0); cudaEventDestroy(ec1);
+//     cudaEventDestroy(eh0); cudaEventDestroy(eh1);
+//     cudaEventDestroy(es1);
+//     cudaEventDestroy(esc0); cudaEventDestroy(esc1);
+//     cudaStreamDestroy(s);
+//     cudaFree(d_in); cudaFree(d_tmp); cudaFree(d_out); cudaFree(d_codes);
+// }
+
+
+
+
 
 // ────────────────────────────────────────────────────────────────
 // compactWarpGPU  – convenience micro-benchmark
@@ -1017,4 +1675,71 @@ void compactOneBin(Point2D*  d_in,
 
     // ── 5. Clean-up
     cudaFree(d_cnt);
+}
+
+
+// ────────────────────────────────────────────────────────────────
+// Device Morton helpers (32-bit, interleave x/y lower 16 bits)
+// ────────────────────────────────────────────────────────────────
+__device__ __forceinline__ uint32_t part1by1(uint32_t x) {
+    x &= 0x0000ffffu;
+    x = (x | (x << 8))  & 0x00ff00ffu;
+    x = (x | (x << 4))  & 0x0f0f0f0fu;
+    x = (x | (x << 2))  & 0x33333333u;
+    x = (x | (x << 1))  & 0x55555555u;
+    return x;
+}
+__device__ __forceinline__ uint32_t morton2D_encode_dev(uint32_t x, uint32_t y) {
+    return part1by1(x) | (part1by1(y) << 1);
+}
+
+// ────────────────────────────────────────────────────────────────
+// Pass-0: 由点直接生成 Morton codes（避免 CPU 侧 codes+H2D）
+// ────────────────────────────────────────────────────────────────
+__global__ void genMortonCodesKernel(const Point2D* __restrict__ in,
+                                     uint32_t*      __restrict__ codes,
+                                     int N)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= N) return;
+    // 注：按你现有数据，x/y 是 float，这里与原 host 代码一致做 (int) 截断
+    int xi = static_cast<int>(in[i].x);
+    int yi = static_cast<int>(in[i].y);
+    codes[i] = morton2D_encode_dev((uint32_t)xi, (uint32_t)yi);
+}
+
+// ────────────────────────────────────────────────────────────────
+// Pass-1: 统计“每个 bin 的有效元素数”（带阈值判定）
+// ────────────────────────────────────────────────────────────────
+__global__ void countValidPerBin_fromCodes(const Point2D*  __restrict__ in,
+                                           const uint32_t* __restrict__ codes,
+                                           int*            __restrict__ binValid,
+                                           int N, int mask, float thr)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= N) return;
+    if (in[i].temp > thr) {
+        int b = static_cast<int>(codes[i] & (uint32_t)mask);
+        atomicAdd(&binValid[b], 1);
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Pass-2: 按桶写出（per-bin atomic），保证每桶连续
+// ────────────────────────────────────────────────────────────────
+__global__ void writePerBinAtomic_fromCodes(const Point2D*  __restrict__ in,
+                                            const uint32_t* __restrict__ codes,
+                                            Point2D*        __restrict__ out,
+                                            const int*      __restrict__ binBase,
+                                            int*            __restrict__ binFill,
+                                            int N, int mask, float thr)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= N) return;
+    const Point2D p = in[i];
+    if (p.temp > thr) {
+        int b   = static_cast<int>(codes[i] & (uint32_t)mask);
+        int off = atomicAdd(&binFill[b], 1);
+        out[binBase[b] + off] = p;
+    }
 }

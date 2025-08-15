@@ -92,7 +92,17 @@ int main(int argc, char* argv[])
               << ", CPU="    << (cfg.runCPU ? "on" : "off")
               << ", GPU="    << (cfg.runGPU ? "on" : "off") << '\n';
 
-    if (cfg.runGPU && chooseCudaCard(true) == 0) return -1;
+    //if (cfg.runGPU && chooseCudaCard(true) == 0) return -1;
+    if (cfg.runGPU) {
+        int devCount = 0;
+        auto st = cudaGetDeviceCount(&devCount);
+        if (st != cudaSuccess || devCount <= 0) {
+            std::cerr << "No CUDA device found\n";
+            return -1;
+        }
+        // 静默选择 0 号设备；如果以后需要可加命令行参数来指定
+        cudaSetDevice(0);
+    }
 
     /* ------------------- data generation -------------------- */
     const int rows = static_cast<int>(std::sqrt(cfg.numPoints));
@@ -123,34 +133,56 @@ int main(int argc, char* argv[])
         float tKer = 0.f, tTot = 0.f;
 
         if (cfg.mode == CmdCfg::Mode::Naive) {
-            testNaiveGPUCompaction(points, THRESHOLD, gpu_out);
-            std::cout << "👉 Naive GPU   : " << gpu_out.size() << " pts\n";
-        } else { /* Bin mode */
-            if (cfg.variant == CmdCfg::Variant::Atomic) {
-                testBinGPUCompaction_atomic(points, THRESHOLD,
-                                            cfg.kBits, gpu_out,
-                                            tKer, tTot);
+        testNaiveGPUCompaction(points, THRESHOLD, gpu_out, &tKer, &tTot);
+        if (cfg.showTiming) {
+            std::cout << "👉 Unbinned baseline : "
+                    << gpu_out.size() << " pts, kernel "
+                    << tKer << " ms, total " << tTot << " ms\n";
+        } else {
+            std::cout << "👉 Unbinned baseline : "
+                    << gpu_out.size() << " pts\n";
+        }
+    } else { /* Bin mode */
+        if (cfg.variant == CmdCfg::Variant::Atomic) {
+            testBinGPUCompaction_atomic(points, THRESHOLD, cfg.kBits,
+                                        gpu_out, tKer, tTot);
+            if (cfg.showTiming) {
                 std::cout << "👉 Bin GPU(k=" << cfg.kBits << ") [atomic] : "
-                          << gpu_out.size() << " pts, kernel "
-                          << tKer << " ms, total " << tTot << " ms\n";
-            } else { /* Partition (Plan-A) */
-                testBinGPUCompaction_partition(points, THRESHOLD,
-                                               cfg.kBits, gpu_out,
-                                               tKer, tTot,
-                                               cfg.kernelKind);
+                        << gpu_out.size() << " pts, kernel "
+                        << tKer << " ms, total " << tTot << " ms\n";
+            } else {
+                std::cout << "👉 Bin GPU(k=" << cfg.kBits << ") [atomic] : "
+                        << gpu_out.size() << " pts\n";
+            }
+        } else { /* Partition (Plan-A) */
+            testBinGPUCompaction_partition(points, THRESHOLD, cfg.kBits,
+                                        gpu_out, tKer, tTot, cfg.kernelKind);
+            if (cfg.showTiming) {
                 std::cout << "👉 Bin GPU(k=" << cfg.kBits << ") [partition/"
-                          << ([&]{
-                                 switch (cfg.kernelKind) {
-                                     case BinKernel::Shared:  return "shared";
-                                     case BinKernel::Warp:    return "warp";
-                                     case BinKernel::Bitmask: return "bitmask";
-                                     case BinKernel::Auto:    return "auto";
-                                 } return "??";
-                             })()
-                          << "] : " << gpu_out.size() << " pts, kernel "
-                          << tKer << " ms, total " << tTot << " ms\n";
+                        << ([&]{
+                                switch (cfg.kernelKind) {
+                                    case BinKernel::Shared:  return "shared";
+                                    case BinKernel::Warp:    return "warp";
+                                    case BinKernel::Bitmask: return "bitmask";
+                                    case BinKernel::Auto:    return "auto";
+                                } return "??";
+                            })()
+                        << "] : " << gpu_out.size() << " pts, kernel "
+                        << tKer << " ms, total " << tTot << " ms\n";
+            } else {
+                std::cout << "👉 Bin GPU(k=" << cfg.kBits << ") [partition/"
+                        << ([&]{
+                                switch (cfg.kernelKind) {
+                                    case BinKernel::Shared:  return "shared";
+                                    case BinKernel::Warp:    return "warp";
+                                    case BinKernel::Bitmask: return "bitmask";
+                                    case BinKernel::Auto:    return "auto";
+                                } return "??";
+                            })()
+                        << "] : " << gpu_out.size() << " pts\n";
             }
         }
+    }
         printPointList(gpu_out, "✅ GPU Compacted Output", cfg.maxPrint);
     }
 
