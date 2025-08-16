@@ -26,6 +26,7 @@
 #include "common.h"
 #include "utils.h"
 #include "stream_compaction.h"
+#include "stream_compaction_bin.h"
 
 // ────────────────────────────────────────────────────────────────
 // Utility helpers
@@ -201,3 +202,41 @@ void runBitmaskBenchmark(int               size,
 
     printPointsComparison(output_d, cpu_baseline);
 }
+
+void print_csv_header() {
+    std::cout
+      << "plan,variant,kBits,N,hit_rate,"
+      << "codes_ms,hist_ms,scan_ms,scatter_ms,count_ms,reduce_ms,write_ms,compact_ms,"
+      << "kernel_ms,e2e_ms,total\n";
+}
+
+// void run_q1_microbench(const std::vector<Point2D>& input, int kBits) {
+//     print_csv_header();
+//     const int N = static_cast<int>(input.size());
+//     const std::vector<double> H = {0.05, 0.50, 0.95}; // 命中率点
+
+//     for (double h : H) {
+//         const float thr = choose_threshold_for_rate(input, h);
+
+//         // ---- Plan B ----
+//         BreakdownPlanB pb{};
+//         testPlanB_breakdown(input, thr, kBits, pb, /*host_output*/nullptr);
+//         std::cout << "PlanB,atomic," << kBits << "," << N << "," << h << ","
+//                   << pb.codes_ms << ",,,,"          // PlanB 没有 hist/scatter
+//                   << pb.count_ms << "," << pb.reduce_ms << "," << pb.write_ms << ","
+//                   << ","                            // PlanB 没有 compact_ms
+//                   << pb.kernel_ms << "," << pb.e2e_ms << "," << pb.total_valid << "\n";
+
+//         // ---- Plan A: shared/warp/bitmask ----
+//         for (auto kind : {BinKernel::Shared, BinKernel::Warp, BinKernel::Bitmask}) {
+//             BreakdownPlanA pa{};
+//             testPlanA_breakdown(input, thr, kBits, kind, pa, /*host_output*/nullptr);
+//             const char* v = (kind==BinKernel::Shared? "shared" :
+//                              kind==BinKernel::Warp?   "warp"   : "bitmask");
+//             std::cout << "PlanA," << v << "," << kBits << "," << N << "," << h << ","
+//                       << pa.codes_ms << "," << pa.hist_ms << "," << pa.scan_ms << "," << pa.scatter_ms << ",,,"
+//                       << pa.compact_ms << ","
+//                       << pa.kernel_ms << "," << pa.e2e_ms << "," << pa.total_out << "\n";
+//         }
+//     }
+// }

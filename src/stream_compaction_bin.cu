@@ -33,6 +33,7 @@
 #include <vector>
 #include <iostream>
 #include <numeric>
+#include <algorithm>
 
 extern float d_threshold;   ///< device-side predicate threshold
 
@@ -45,6 +46,17 @@ extern float d_threshold;   ///< device-side predicate threshold
   } \
 } while(0)
 #endif
+
+
+// 命中率控制：把 threshold 选成 (1 - h) 分位点，使 “temp > threshold” ≈ h
+float choose_threshold_for_rate(const std::vector<Point2D>& input, double target_hit_rate) {
+    std::vector<float> temps; temps.reserve(input.size());
+    for (const auto& p : input) temps.push_back(p.temp);
+    // k = (1 - h) * N 处的元素作为 threshold
+    const size_t k = static_cast<size_t>((1.0 - target_hit_rate) * temps.size());
+    std::nth_element(temps.begin(), temps.begin() + std::min(k, temps.size()-1), temps.end());
+    return temps[std::min(k, temps.size()-1)];
+}
 
 // RAII：把已有 std::vector 的内存“临时注册”为 pinned，析构时自动取消注册
 struct PinnedGuard {
@@ -594,6 +606,108 @@ void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
     cudaFree(d_in); cudaFree(d_out); cudaFree(d_codes);
 }
 
+void testPlanB_breakdown(const std::vector<Point2D>& input,
+                         float                       threshold,
+                         int                         kBits,
+                         BreakdownPlanB&             out,
+                         std::vector<Point2D>*       host_output /*opt, 可为nullptr*/)
+{
+    const int N       = (int)input.size();
+    const int numBins = 1 << kBits;
+    const int mask    = numBins - 1;
+
+    // 事件
+    cudaEvent_t e0,e1,k0,k1, ec0,ec1, ecount0,ecount1, escan1, ered1, ew0,ew1;
+    cudaEventCreate(&e0); cudaEventCreate(&e1);
+    cudaEventCreate(&k0); cudaEventCreate(&k1);
+    cudaEventCreate(&ec0); cudaEventCreate(&ec1);
+    cudaEventCreate(&ecount0); cudaEventCreate(&ecount1);
+    cudaEventCreate(&escan1); cudaEventCreate(&ered1);
+    cudaEventCreate(&ew0); cudaEventCreate(&ew1);
+
+    // 设备内存
+    Point2D *d_in=nullptr, *d_out=nullptr; uint32_t* d_codes=nullptr;
+    CUDA_CHECK(cudaMalloc(&d_in,    N * sizeof(Point2D)));
+    CUDA_CHECK(cudaMalloc(&d_out,   N * sizeof(Point2D)));
+    CUDA_CHECK(cudaMalloc(&d_codes, N * sizeof(uint32_t)));
+
+    thrust::device_vector<int> d_binValid(numBins, 0);
+    thrust::device_vector<int> d_binBase (numBins+1, 0);
+    thrust::device_vector<int> d_binFill (numBins, 0);
+
+    const int threads=256, blocks=(N+threads-1)/threads;
+
+    // E2E 开始：H2D
+    CUDA_CHECK(cudaEventRecord(e0, 0));
+    CUDA_CHECK(cudaMemcpyAsync(d_in, input.data(), N*sizeof(Point2D), cudaMemcpyHostToDevice, 0));
+
+    // Kernel-only 从 codes 前开始
+    CUDA_CHECK(cudaEventRecord(k0, 0));
+
+    // Pass-0: codes (GPU)
+    CUDA_CHECK(cudaEventRecord(ec0, 0));
+    genMortonCodesKernel<<<blocks, threads>>>(d_in, d_codes, N);
+    CUDA_CHECK(cudaEventRecord(ec1, 0));
+
+    // Pass-1: count valid per bin
+    CUDA_CHECK(cudaEventRecord(ecount0, 0));
+    countValidPerBin_fromCodes<<<blocks, threads>>>(
+        d_in, d_codes, thrust::raw_pointer_cast(d_binValid.data()),
+        N, mask, threshold);
+    CUDA_CHECK(cudaEventRecord(ecount1, 0));
+
+    // Scan + reduce
+    thrust::exclusive_scan(d_binValid.begin(), d_binValid.end(), d_binBase.begin());
+    int totalValid = thrust::reduce(d_binValid.begin(), d_binValid.end(), 0, thrust::plus<int>());
+    d_binBase[numBins] = totalValid; // sentinel
+    CUDA_CHECK(cudaEventRecord(escan1, 0)); // scan+reduce 截止到此
+    // 注：为单点计时清晰，我们把 scan 和 reduce 合并记入 scan_ms，或按需拆成 scan_ms / reduce_ms
+    // 若要拆分，可在 exclusive_scan 前后、reduce 前后再打事件。
+
+    // Pass-2: write per bin (atomic)
+    thrust::fill(d_binFill.begin(), d_binFill.end(), 0);
+    CUDA_CHECK(cudaEventRecord(ew0, 0));
+    writePerBinAtomic_fromCodes<<<blocks, threads>>>(
+        d_in, d_codes, d_out,
+        thrust::raw_pointer_cast(d_binBase.data()),
+        thrust::raw_pointer_cast(d_binFill.data()),
+        N, mask, threshold);
+    CUDA_CHECK(cudaEventRecord(ew1, 0));
+    CUDA_CHECK(cudaEventRecord(k1, 0));
+    CUDA_CHECK(cudaEventSynchronize(k1));
+
+    // D2H （计入 E2E）
+    if (host_output) {
+        host_output->resize(totalValid);
+        if (totalValid > 0) {
+            CUDA_CHECK(cudaMemcpyAsync(host_output->data(), d_out,
+                                       totalValid*sizeof(Point2D),
+                                       cudaMemcpyDeviceToHost, 0));
+        }
+    }
+    CUDA_CHECK(cudaEventRecord(e1, 0));
+    CUDA_CHECK(cudaEventSynchronize(e1));
+
+    // 读时长
+    out.total_valid = totalValid;
+    CUDA_CHECK(cudaEventElapsedTime(&out.kernel_ms, k0, k1));
+    CUDA_CHECK(cudaEventElapsedTime(&out.e2e_ms,    e0, e1));
+    CUDA_CHECK(cudaEventElapsedTime(&out.codes_ms,  ec0, ec1));
+    CUDA_CHECK(cudaEventElapsedTime(&out.count_ms,  ecount0, ecount1));
+    CUDA_CHECK(cudaEventElapsedTime(&out.write_ms,  ew0, ew1));
+    // scan_ms（含 reduce）：用 ehist->escan1 区间；这里复用 ecount1→escan1
+    CUDA_CHECK(cudaEventElapsedTime(&out.scan_ms,   ecount1, escan1));
+    // 如需把 reduce 单独拆出，可在 reduce 前后再打两个事件得到 out.reduce_ms
+
+    // 清理
+    cudaEventDestroy(e0); cudaEventDestroy(e1);
+    cudaEventDestroy(k0); cudaEventDestroy(k1);
+    cudaEventDestroy(ec0); cudaEventDestroy(ec1);
+    cudaEventDestroy(ecount0); cudaEventDestroy(ecount1);
+    cudaEventDestroy(escan1); cudaEventDestroy(ered1);
+    cudaEventDestroy(ew0); cudaEventDestroy(ew1);
+    cudaFree(d_in); cudaFree(d_out); cudaFree(d_codes);
+}
 
 // use pinned memory for async H2D/D2H 
 // void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
@@ -1407,6 +1521,129 @@ void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
     cudaFree(d_tmp);
     cudaFree(d_out);
     cudaFree(d_codes);
+}
+
+void testPlanA_breakdown(const std::vector<Point2D>& input,
+                         float                       threshold,
+                         int                         kBits,
+                         BinKernel                   kernelKind,
+                         BreakdownPlanA&             out,
+                         std::vector<Point2D>*       host_output /*opt*/ )
+{
+    const int N       = (int)input.size();
+    const int numBins = 1 << kBits;
+    const int mask    = numBins - 1;
+
+    // 事件
+    cudaEvent_t e0,e1,k0,k1, ecodes0,ecodes1, eh0,eh1, es1, esc0,esc1, ec0,ec1;
+    cudaEventCreate(&e0); cudaEventCreate(&e1);
+    cudaEventCreate(&k0); cudaEventCreate(&k1);
+    cudaEventCreate(&ecodes0); cudaEventCreate(&ecodes1);
+    cudaEventCreate(&eh0); cudaEventCreate(&eh1);
+    cudaEventCreate(&es1);
+    cudaEventCreate(&esc0); cudaEventCreate(&esc1);
+    cudaEventCreate(&ec0); cudaEventCreate(&ec1);
+
+    // 缓冲
+    Point2D *d_in=nullptr, *d_tmp=nullptr, *d_out=nullptr; uint32_t* d_codes=nullptr;
+    cudaMalloc(&d_in,  N*sizeof(Point2D));
+    cudaMalloc(&d_tmp, N*sizeof(Point2D));
+    cudaMalloc(&d_out, N*sizeof(Point2D));
+    cudaMalloc(&d_codes, N*sizeof(uint32_t));
+
+    // E2E: H2D
+    cudaEventRecord(e0, 0);
+    cudaMemcpyAsync(d_in, input.data(), N*sizeof(Point2D), cudaMemcpyHostToDevice, 0);
+
+    thrust::device_vector<int> d_binSizes(numBins, 0), d_binOffsets(numBins+1, 0);
+
+    const int threads=256, blocks=(N+threads-1)/threads;
+
+    // Kernel-only from codes
+    cudaEventRecord(k0, 0);
+
+    // Pass-0: codes
+    cudaEventRecord(ecodes0, 0);
+    genMortonCodesKernel<<<blocks, threads>>>(d_in, d_codes, N);
+    cudaEventRecord(ecodes1, 0);
+
+    // Pass-1: histogram
+    cudaEventRecord(eh0, 0);
+    histogramBins<<<blocks,threads>>>(d_codes, thrust::raw_pointer_cast(d_binSizes.data()), N, mask);
+    cudaEventRecord(eh1, 0);
+
+    // scan → offsets
+    thrust::exclusive_scan(d_binSizes.begin(), d_binSizes.end(), d_binOffsets.begin());
+    d_binOffsets[numBins] = N;
+    cudaEventRecord(es1, 0);
+
+    // Pass-2: scatter (map + gather)
+    thrust::device_vector<int> d_binCursor(numBins, 0);
+    thrust::device_vector<int> d_srcIndexForDest(N, -1);
+    cudaEventRecord(esc0, 0);
+    buildDestMapKernel<<<blocks, threads>>>(
+        d_codes,
+        thrust::raw_pointer_cast(d_binOffsets.data()),
+        thrust::raw_pointer_cast(d_binCursor.data()),
+        thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+        N, mask);
+    gatherCopyKernel<<<blocks, threads>>>(
+        d_in, d_tmp,
+        thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+        N);
+    cudaEventRecord(esc1, 0);
+
+    // 元数据回主机，用于 per-bin 调度
+    std::vector<int> h_offsets(numBins+1), h_sizes(numBins);
+    thrust::copy(d_binOffsets.begin(), d_binOffsets.end(), h_offsets.begin());
+    thrust::copy(d_binSizes.begin(),   d_binSizes.end(),   h_sizes.begin());
+
+    // Per-bin compaction（纳入 kernel-only）
+    int totalOut = 0;
+    cudaEventRecord(ec0, 0);
+    for (int b=0; b<numBins; ++b) {
+        int off=h_offsets[b], sz=h_sizes[b];
+        if (sz==0) continue;
+        int h_cnt=0;
+        compactOneBin(d_tmp+off, d_out+totalOut, sz, threshold, h_cnt, kernelKind);
+        totalOut += h_cnt;
+    }
+    cudaDeviceSynchronize();
+    cudaEventRecord(ec1, 0);
+
+    // Kernel-only 截止
+    cudaEventRecord(k1, 0);
+    cudaEventSynchronize(k1);
+
+    // D2H（计入 E2E）
+    if (host_output) {
+        host_output->resize(totalOut);
+        if (totalOut>0) {
+            cudaMemcpyAsync(host_output->data(), d_out, totalOut*sizeof(Point2D), cudaMemcpyDeviceToHost, 0);
+        }
+    }
+    cudaEventRecord(e1, 0);
+    cudaEventSynchronize(e1);
+
+    // 回填
+    out.total_out = totalOut;
+    cudaEventElapsedTime(&out.kernel_ms, k0, k1);
+    cudaEventElapsedTime(&out.e2e_ms,    e0, e1);
+    cudaEventElapsedTime(&out.codes_ms,  ecodes0, ecodes1);
+    cudaEventElapsedTime(&out.hist_ms,   eh0, eh1);
+    cudaEventElapsedTime(&out.scan_ms,   eh1, es1);
+    cudaEventElapsedTime(&out.scatter_ms,esc0, esc1);
+    cudaEventElapsedTime(&out.compact_ms,ec0, ec1);
+
+    // 清理
+    cudaEventDestroy(e0); cudaEventDestroy(e1);
+    cudaEventDestroy(k0); cudaEventDestroy(k1);
+    cudaEventDestroy(ecodes0); cudaEventDestroy(ecodes1);
+    cudaEventDestroy(eh0); cudaEventDestroy(eh1);
+    cudaEventDestroy(es1);
+    cudaEventDestroy(esc0); cudaEventDestroy(esc1);
+    cudaEventDestroy(ec0); cudaEventDestroy(ec1);
+    cudaFree(d_in); cudaFree(d_tmp); cudaFree(d_out); cudaFree(d_codes);
 }
 
 // use 自建流 & 事件，避免默认流的隐式同步

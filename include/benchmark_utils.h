@@ -16,6 +16,19 @@
 
 #include "common.h"
 
+// ================== Micro-benchmark breakdown structs ==================
+struct BreakdownPlanA {
+    float codes_ms{0}, hist_ms{0}, scan_ms{0}, scatter_ms{0}, compact_ms{0};
+    float kernel_ms{0}, e2e_ms{0};
+    int   total_out{0};
+};
+
+struct BreakdownPlanB {
+    float codes_ms{0}, count_ms{0}, scan_ms{0}, reduce_ms{0}, write_ms{0};
+    float kernel_ms{0}, e2e_ms{0};
+    int   total_valid{0};
+};
+
 /**
  * @brief Print a side-by-side comparison between GPU output and CPU baseline.
  *
@@ -51,3 +64,7 @@ void runBitmaskBenchmark(int size,
  * @return true if the Morton code of `a` precedes that of `b`.
  */
 bool compareMorton(const Point2D& a, const Point2D& b);
+
+void print_csv_header();
+
+// void run_q1_microbench(const std::vector<Point2D>& input, int kBits);

@@ -25,6 +25,7 @@
 
 #include "common.h"      // Point2D definition
 #include "bin_kernel.h"  // BinKernel enum
+#include "benchmark_utils.h" // for run_q1_microbench
 
 #ifndef BINS_MAX
 #define BINS_MAX 256   // kBits <= 8 时为 256
@@ -269,3 +270,20 @@ __global__ void writePerBinAtomic_fromCodes(const Point2D*  __restrict__ in,
                                             const int*      __restrict__ binBase,
                                             int*            __restrict__ binFill,
                                             int N, int mask, float thr);
+
+
+
+float choose_threshold_for_rate(const std::vector<Point2D>& input, double target_hit_rate);
+
+void testPlanB_breakdown(const std::vector<Point2D>& input,
+                         float                       threshold,
+                         int                         kBits,
+                         BreakdownPlanB&             out,
+                         std::vector<Point2D>*       host_output /*opt, 可为nullptr*/);
+
+void testPlanA_breakdown(const std::vector<Point2D>& input,
+                         float                       threshold,
+                         int                         kBits,
+                         BinKernel                   kernelKind,
+                         BreakdownPlanA&             out,
+                         std::vector<Point2D>*       host_output /*opt*/ );
