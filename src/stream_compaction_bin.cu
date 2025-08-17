@@ -49,6 +49,11 @@ int g_block_size = BLOCK_SIZE;  // default 256
 } while(0)
 #endif
 
+// ===== Q6 toggle: Plan A Pass-2 use gatherCopy (baseline) or direct scatter =====
+static bool g_planA_use_gather = true;   // 默认 baseline: buildDestMap + gatherCopy
+
+// 对外暴露一个 setter，供 driver 调用：set_planA_use_gather(false) => 走 scatterToBins
+void set_planA_use_gather(bool v) { g_planA_use_gather = v; }
 
 // 命中率控制：把 threshold 选成 (1 - h) 分位点，使 “temp > threshold” ≈ h
 float choose_threshold_for_rate(const std::vector<Point2D>& input, double target_hit_rate) {
@@ -1584,21 +1589,54 @@ void testPlanA_breakdown(const std::vector<Point2D>& input,
     d_binOffsets[numBins] = N;
     cudaEventRecord(es1, 0);
 
-    // Pass-2: scatter (map + gather)
-    thrust::device_vector<int> d_binCursor(numBins, 0);
-    thrust::device_vector<int> d_srcIndexForDest(N, -1);
+    // // Pass-2: scatter (map + gather)
+    // thrust::device_vector<int> d_binCursor(numBins, 0);
+    // thrust::device_vector<int> d_srcIndexForDest(N, -1);
+    // cudaEventRecord(esc0, 0);
+    // buildDestMapKernel<<<blocks, threads>>>(
+    //     d_codes,
+    //     thrust::raw_pointer_cast(d_binOffsets.data()),
+    //     thrust::raw_pointer_cast(d_binCursor.data()),
+    //     thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+    //     N, mask);
+    // gatherCopyKernel<<<blocks, threads>>>(
+    //     d_in, d_tmp,
+    //     thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+    //     N);
+    // cudaEventRecord(esc1, 0);
+
+    // Pass-2: scatter / gather  — 由 g_planA_use_gather 控制
     cudaEventRecord(esc0, 0);
-    buildDestMapKernel<<<blocks, threads>>>(
-        d_codes,
-        thrust::raw_pointer_cast(d_binOffsets.data()),
-        thrust::raw_pointer_cast(d_binCursor.data()),
-        thrust::raw_pointer_cast(d_srcIndexForDest.data()),
-        N, mask);
-    gatherCopyKernel<<<blocks, threads>>>(
-        d_in, d_tmp,
-        thrust::raw_pointer_cast(d_srcIndexForDest.data()),
-        N);
+
+    if (g_planA_use_gather) {
+        // ===== baseline: buildDestMap + gatherCopy（顺序写，合并好）=====
+        thrust::device_vector<int> d_binCursor(numBins, 0);
+        thrust::device_vector<int> d_srcIndexForDest(N, -1);
+
+        buildDestMapKernel<<<blocks, threads>>>(
+            d_codes,
+            thrust::raw_pointer_cast(d_binOffsets.data()),
+            thrust::raw_pointer_cast(d_binCursor.data()),
+            thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+            N, mask);
+
+        gatherCopyKernel<<<blocks, threads>>>(
+            d_in, d_tmp,
+            thrust::raw_pointer_cast(d_srcIndexForDest.data()),
+            N);
+    } else {
+        // ===== no-gather ablation: 直接 scatter 到各 bin 的连续段 =====
+        // 用 offsets 作为每个 bin 的起始写指针，拷到 d_tmp
+        thrust::device_vector<int> d_binCursor = d_binOffsets;  // 起始 = exclusive offsets
+        scatterToBins<<<blocks, threads>>>(
+            d_in, d_tmp, d_codes,
+            thrust::raw_pointer_cast(d_binCursor.data()),
+            N, mask);
+    }
+
     cudaEventRecord(esc1, 0);
+
+
 
     // 元数据回主机，用于 per-bin 调度
     std::vector<int> h_offsets(numBins+1), h_sizes(numBins);

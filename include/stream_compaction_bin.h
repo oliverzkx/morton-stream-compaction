@@ -287,3 +287,5 @@ void testPlanA_breakdown(const std::vector<Point2D>& input,
                          BinKernel                   kernelKind,
                          BreakdownPlanA&             out,
                          std::vector<Point2D>*       host_output /*opt*/ );
+
+void set_planA_use_gather(bool v);

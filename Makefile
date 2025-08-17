@@ -37,6 +37,9 @@ Q4_SRCS := src/q4_distribution.cu src/benchmark_utils.cu $(COMMON_SRCS)
 # ========= Q5: scalability (dataset size sweep) =============================
 Q5_SRCS := src/q5_scalability.cu src/benchmark_utils.cu $(COMMON_SRCS)
 
+# ========= Q6: ablation study (gather/no-gather, binning/no-binning, force) =
+Q6_SRCS := src/q6_ablation.cu src/benchmark_utils.cu $(COMMON_SRCS)
+
 # ========= object file lists ================================================
 MAIN_OBJS      := $(MAIN_SRCS:src/%.cu=build/%.o)
 BENCHMARK_OBJS := $(BENCHMARK_SRCS:src/%.cu=build/%.o)
@@ -44,14 +47,16 @@ Q1_OBJS        := $(Q1_SRCS:src/%.cu=build/%.o)
 Q3_OBJS        := $(Q3_SRCS:src/%.cu=build/%.o)
 Q4_OBJS        := $(Q4_SRCS:src/%.cu=build/%.o)
 Q5_OBJS        := $(Q5_SRCS:src/%.cu=build/%.o)
+Q6_OBJS        := $(Q6_SRCS:src/%.cu=build/%.o)
 
-# ========= final binaries ===================================================
+# ========= final binaries ====================================================
 TARGET     := build/main
 BENCHMARK  := build/benchmark_runner
 Q1_BIN     := build/q1_microbench
 Q3_BIN     := build/q3_param_sweep
 Q4_BIN     := build/q4_distribution
 Q5_BIN     := build/q5_scalability
+Q6_BIN     := build/q6_ablation
 
 # ========= CSV output dir & files ===========================================
 CSV_DIR        := csv
@@ -95,8 +100,18 @@ Q5_BLOCK    ?= 256
 Q5_VARIANTS ?= planB,planA_shared,planA_warp,planA_bitmask
 Q5_ROOF     ?= proxy_v1
 
-# ========= default target ===================================================
-all: $(TARGET) $(BENCHMARK) $(Q1_BIN) $(Q3_BIN) $(Q4_BIN) $(Q5_BIN)
+# Q6 CSV (ablation)
+Q6_CSV      := $(CSV_DIR)/q6_ablation.csv
+Q6_N        ?= 20000000
+Q6_KBITS    ?= 8
+Q6_HIT      ?= 0.50
+Q6_DIST     ?= uniform
+Q6_SEED     ?= 1234
+Q6_REPEATS  ?= 5
+Q6_BLOCK    ?= 256
+
+# ========= default target ====================================================
+all: $(TARGET) $(BENCHMARK) $(Q1_BIN) $(Q3_BIN) $(Q4_BIN) $(Q5_BIN) $(Q6_BIN)
 	@echo "✔️  Build finished ($(BUILD))"
 
 # ========= compile step (.cu → .o) ==========================================
@@ -104,7 +119,7 @@ build/%.o: src/%.cu
 	@mkdir -p $(dir $@)
 	$(NVCC_COMPILE)
 
-# ========= link step ========================================================
+# ========= link step =========================================================
 $(TARGET): $(MAIN_OBJS)
 	$(NVCC) $(CXXFLAGS) $(INCLUDES) -o $@ $^
 
@@ -121,6 +136,9 @@ $(Q4_BIN): $(Q4_OBJS)
 	$(NVCC) $(CXXFLAGS) $(INCLUDES) -o $@ $^
 
 $(Q5_BIN): $(Q5_OBJS)
+	$(NVCC) $(CXXFLAGS) $(INCLUDES) -o $@ $^
+
+$(Q6_BIN): $(Q6_OBJS)
 	$(NVCC) $(CXXFLAGS) $(INCLUDES) -o $@ $^
 
 # ========= run Q1 and dump CSV ==============================================
@@ -178,6 +196,48 @@ q5: $(Q5_BIN) | $(CSV_DIR)
 	  --csv $(Q5_CSV) --roofline $(Q5_ROOF)
 	@echo "✔️  Q5 CSV written: $(Q5_CSV)"
 
+# ========= run Q6 ablation set and dump CSV =================================
+q6: $(Q6_BIN) | $(CSV_DIR)
+	@echo "→ Running Q6: ablation study → $(Q6_CSV)"
+	@rm -f $(Q6_CSV)
+	# Baseline: Plan A + Auto + gather + binning
+	$(Q6_BIN) --N $(Q6_N) --k $(Q6_KBITS) --hit $(Q6_HIT) --dist $(Q6_DIST) \
+	          --seed $(Q6_SEED) --plan A --force-kernel auto --repeats $(Q6_REPEATS) \
+	          --block $(Q6_BLOCK) --csv $(Q6_CSV)
+	# Plan A: no-gather (需要你在源码里开启 scatterToBins 路径方可生效)
+	@tmp=$$(mktemp); \
+	$(Q6_BIN) --N $(Q6_N) --k $(Q6_KBITS) --hit $(Q6_HIT) --dist $(Q6_DIST) \
+	          --seed $(Q6_SEED) --plan A --no-gather --force-kernel auto \
+	          --repeats $(Q6_REPEATS) --block $(Q6_BLOCK) --csv $$tmp; \
+	tail -n +2 $$tmp >> $(Q6_CSV); rm -f $$tmp
+	# Plan A: no-binning
+	@tmp=$$(mktemp); \
+	$(Q6_BIN) --N $(Q6_N) --k $(Q6_KBITS) --hit $(Q6_HIT) --dist $(Q6_DIST) \
+	          --seed $(Q6_SEED) --plan A --no-binning --force-kernel auto \
+	          --repeats $(Q6_REPEATS) --block $(Q6_BLOCK) --csv $$tmp; \
+	tail -n +2 $$tmp >> $(Q6_CSV); rm -f $$tmp
+	# Plan A: force shared/warp/bitmask
+	@for K in shared warp bitmask; do \
+	  tmp=$$(mktemp); \
+	  $(Q6_BIN) --N $(Q6_N) --k $(Q6_KBITS) --hit $(Q6_HIT) --dist $(Q6_DIST) \
+	            --seed $(Q6_SEED) --plan A --force-kernel $$K \
+	            --repeats $(Q6_REPEATS) --block $(Q6_BLOCK) --csv $$tmp; \
+	  tail -n +2 $$tmp >> $(Q6_CSV); rm -f $$tmp; \
+	done
+	# Plan B: baseline
+	@tmp=$$(mktemp); \
+	$(Q6_BIN) --N $(Q6_N) --k $(Q6_KBITS) --hit $(Q6_HIT) --dist $(Q6_DIST) \
+	          --seed $(Q6_SEED) --plan B --repeats $(Q6_REPEATS) \
+	          --block $(Q6_BLOCK) --csv $$tmp; \
+	tail -n +2 $$tmp >> $(Q6_CSV); rm -f $$tmp
+	# Plan B: no-binning
+	@tmp=$$(mktemp); \
+	$(Q6_BIN) --N $(Q6_N) --k $(Q6_KBITS) --hit $(Q6_HIT) --dist $(Q6_DIST) \
+	          --seed $(Q6_SEED) --plan B --no-binning --repeats $(Q6_REPEATS) \
+	          --block $(Q6_BLOCK) --csv $$tmp; \
+	tail -n +2 $$tmp >> $(Q6_CSV); rm -f $$tmp
+	@echo "✔️  Q6 CSV written: $(Q6_CSV)"
+
 # ========= plotting (optional convenience) ==================================
 plot_q3:
 	python3 scripts/plot_q3.py
@@ -190,8 +250,8 @@ plot_q4:
 $(CSV_DIR):
 	@mkdir -p $(CSV_DIR)
 
-# ========= cleanup ==========================================================
+# ========= cleanup ===========================================================
 clean:
 	rm -rf build $(CSV_DIR)
 
-.PHONY: all clean q1 q3block q3 q4 q5 plot_q3 plot_q4
+.PHONY: all clean q1 q3block q3 q4 q5 q6 plot_q3 plot_q4
