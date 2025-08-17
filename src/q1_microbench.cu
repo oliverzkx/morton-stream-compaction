@@ -82,7 +82,7 @@ static inline int clampi(int v, int lo, int hi) {
 }
 
 // Generate a uniform dataset on a 2D grid; temp ~ U[0,1)
-static std::vector<Point2D> make_uniform_dataset(std::size_t N, uint32_t seed=1234) {
+std::vector<Point2D> make_uniform_dataset(std::size_t N, uint32_t seed=1234) {
   std::mt19937 rng(seed);
   std::uniform_int_distribution<int> XY(0, 65535);   // fits in 16 bits
   std::uniform_real_distribution<float> F01(0.f, 1.f);
@@ -100,7 +100,7 @@ static std::vector<Point2D> make_uniform_dataset(std::size_t N, uint32_t seed=12
 }
 
 // Clustered: choose K random centers; samples are Gaussians around centers
-static std::vector<Point2D> make_clustered_dataset(std::size_t N,
+std::vector<Point2D> make_clustered_dataset(std::size_t N,
                                                    int K = 32,
                                                    float sigma = 300.f,
                                                    uint32_t seed=5678) {
@@ -131,7 +131,7 @@ static std::vector<Point2D> make_clustered_dataset(std::size_t N,
 }
 
 // Skewed: put a large fraction into a tiny window; rest uniform
-static std::vector<Point2D> make_skewed_dataset(std::size_t N,
+std::vector<Point2D> make_skewed_dataset(std::size_t N,
                                                 double heavy_frac = 0.9,
                                                 int window = 1024,
                                                 uint32_t seed=9012) {
@@ -160,7 +160,7 @@ static std::vector<Point2D> make_skewed_dataset(std::size_t N,
   return v;
 }
 
-static std::vector<Point2D> make_dataset(std::size_t N, const std::string& dist) {
+std::vector<Point2D> make_dataset(std::size_t N, const std::string& dist) {
   if (dist == "uniform")   return make_uniform_dataset(N);
   if (dist == "clustered") return make_clustered_dataset(N);
   if (dist == "skewed")    return make_skewed_dataset(N);

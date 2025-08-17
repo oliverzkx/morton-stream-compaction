@@ -25,6 +25,9 @@
 /// Default CUDA thread-block size used across kernels
 #define BLOCK_SIZE 256
 
+/// Runtime-tunable CUDA block size (default follows BLOCK_SIZE)
+extern int g_block_size;
+inline void set_block_size(int bs) { g_block_size = bs; }
 
 // ────────────────────────────────────────────────────────────────
 // Morton encoding

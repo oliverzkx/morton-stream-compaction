@@ -28,19 +28,19 @@ static Args parse_cli(int argc, char** argv);
 
 static inline int clampi(int v, int lo, int hi);
 
-static std::vector<Point2D> make_uniform_dataset(std::size_t N, uint32_t seed);
+std::vector<Point2D> make_uniform_dataset(std::size_t N, uint32_t seed);
 
-static std::vector<Point2D> make_clustered_dataset(std::size_t N,
+std::vector<Point2D> make_clustered_dataset(std::size_t N,
                                                    int K ,
                                                    float sigma ,
                                                    uint32_t seed);
 
-static std::vector<Point2D> make_skewed_dataset(std::size_t N,
+std::vector<Point2D> make_skewed_dataset(std::size_t N,
                                                 double heavy_frac,
                                                 int window ,
                                                 uint32_t seed);
 
-static std::vector<Point2D> make_dataset(std::size_t N, const std::string& dist);
+std::vector<Point2D> make_dataset(std::size_t N, const std::string& dist);
 
 static void run_q1_microbench(const std::vector<Point2D>& input, int kBits,
                               const std::vector<double>& hit_rates);

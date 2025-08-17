@@ -37,6 +37,8 @@
 
 extern float d_threshold;   ///< device-side predicate threshold
 
+int g_block_size = BLOCK_SIZE;  // default 256
+
 #ifndef CUDA_CHECK
 #define CUDA_CHECK(x) do { \
   cudaError_t err__ = (x); \
@@ -543,7 +545,7 @@ void testBinGPUCompaction_atomic(const std::vector<Point2D>& input,
     thrust::device_vector<int> d_binBase  (numBins+1, 0); // 每 bin 基址（exclusive）
     thrust::device_vector<int> d_binFill  (numBins, 0);   // Pass-2 每 bin 运行计数器
 
-    const int threads = 256;
+    const int threads = g_block_size;
     const int blocks  = (N + threads - 1) / threads;
 
     // --- E2E：从第一笔 H2D(input) 开始
@@ -635,7 +637,9 @@ void testPlanB_breakdown(const std::vector<Point2D>& input,
     thrust::device_vector<int> d_binBase (numBins+1, 0);
     thrust::device_vector<int> d_binFill (numBins, 0);
 
-    const int threads=256, blocks=(N+threads-1)/threads;
+    //const int threads=256, blocks=(N+threads-1)/threads;
+    const int threads = g_block_size;
+    const int blocks  = (N + threads - 1) / threads;
 
     // E2E 开始：H2D
     CUDA_CHECK(cudaEventRecord(e0, 0));
@@ -1410,7 +1414,8 @@ void testBinGPUCompaction_partition(const std::vector<Point2D>& input,
     thrust::device_vector<int> d_binSizes  (numBins,   0);
     thrust::device_vector<int> d_binOffsets(numBins+1, 0);
 
-    const int threads = 256;
+    //const int threads = 256;
+    const int threads = g_block_size;
     const int blocks  = (N + threads - 1) / threads;
 
     // ===== Kernel-only 计时从 codes 前开始 =====
@@ -1557,7 +1562,9 @@ void testPlanA_breakdown(const std::vector<Point2D>& input,
 
     thrust::device_vector<int> d_binSizes(numBins, 0), d_binOffsets(numBins+1, 0);
 
-    const int threads=256, blocks=(N+threads-1)/threads;
+    //const int threads=256, blocks=(N+threads-1)/threads;
+    const int threads = g_block_size;
+    const int blocks  = (N + threads - 1) / threads;
 
     // Kernel-only from codes
     cudaEventRecord(k0, 0);

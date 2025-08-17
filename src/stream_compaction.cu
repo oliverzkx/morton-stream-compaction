@@ -138,9 +138,11 @@ void compactNaiveGPU(const Point2D* d_in, Point2D* d_out, int N, int& h_outCount
     // dim3 dimBlock(BLOCK_SIZE);
     // dim3 dimGrid((N + BLOCK_SIZE  - 1) / BLOCK_SIZE );
     // use SM * 8 to try to maximize occupancy
-    dim3 dimBlock(BLOCK_SIZE);
+    //dim3 dimBlock(BLOCK_SIZE);
+    dim3 dimBlock(g_block_size);
     //dim3 dimGrid = choose_grid(N, BLOCK_SIZE, 8);
-    dim3 dimGrid = choose_grid_force_big(BLOCK_SIZE, 8);
+    //dim3 dimGrid = choose_grid_force_big(BLOCK_SIZE, 8);
+    dim3 dimGrid = choose_grid_force_big(g_block_size, 8);
 
     streamCompactNaive<<<dimGrid, dimBlock>>>(d_in, d_out, N, d_counter);
 
@@ -228,8 +230,10 @@ __global__ void streamCompactShared(const Point2D* in,
 void compactSharedGPU(const Point2D* d_in, Point2D* d_out, int N,
                       float threshold, int& h_outCount)
 {
-    dim3 dimBlock(BLOCK_SIZE);
-    dim3 dimGrid((N + BLOCK_SIZE - 1) / BLOCK_SIZE);
+    //dim3 dimBlock(BLOCK_SIZE);
+    dim3 dimBlock(g_block_size);
+    //dim3 dimGrid((N + BLOCK_SIZE - 1) / BLOCK_SIZE);
+    dim3 dimGrid((N + g_block_size - 1) / g_block_size);
 
     // Allocate device memory for per-block counts
     int* d_block_counts;
@@ -493,8 +497,11 @@ __global__ void compactPointsWarpShuffle(
     /* ------------------------------------------------------------------ *
      * 0. Initialise per-warp counters in shared memory                    *
      * ------------------------------------------------------------------ */
-    __shared__ int warp_sum[BLOCK_SIZE / 32];          // max 32 warps / block
-    if (threadIdx.x < BLOCK_SIZE / 32) warp_sum[threadIdx.x] = 0;
+    //__shared__ int warp_sum[BLOCK_SIZE / 32];          // max 32 warps / block
+    //if (threadIdx.x < BLOCK_SIZE / 32) warp_sum[threadIdx.x] = 0;
+    __shared__ int warp_sum[32];                     // up to 32 warps (1024 threads)
+    int numWarps = (blockDim.x + 31) >> 5;
+    if (threadIdx.x < numWarps) warp_sum[threadIdx.x] = 0;
     __syncthreads();
 
     /* ------------------------------------------------------------------ *
@@ -578,7 +585,8 @@ void compact_points_warp(
     int* d_count,
     int num_points
 ) {
-    const dim3 blockDim(BLOCK_SIZE);
+    //const dim3 blockDim(BLOCK_SIZE);
+    const dim3 blockDim(g_block_size);
     const dim3 gridDim((num_points + BLOCK_SIZE - 1) / BLOCK_SIZE);
     //const dim3 gridDim = choose_grid(num_points, BLOCK_SIZE, 8);
 
@@ -765,7 +773,8 @@ __global__ void compactPointsBitmaskSurface(
     int local_pos = __popc(mask & ((1U << lane_id) - 1));
     int total_in_warp = __popc(mask);
 
-    __shared__ int warp_offsets[BLOCK_SIZE / 32];
+    //__shared__ int warp_offsets[BLOCK_SIZE / 32];
+    __shared__ int warp_offsets[32];                 // index by warp_id < numWarps
     if (lane_id == 0) {
         warp_offsets[warp_id] = atomicAdd(d_count, total_in_warp);
     }
@@ -799,11 +808,12 @@ void compact_points_bitmask(
     int* d_count,
     int num_points
 ) {
-    const dim3 blockDim(BLOCK_SIZE);
+    // const dim3 blockDim(BLOCK_SIZE);
+    const dim3 blockDim(g_block_size);
     // const dim3 gridDim((num_points + BLOCK_SIZE - 1) / BLOCK_SIZE);
     // const dim3 gridDim = choose_grid(num_points, BLOCK_SIZE, 8);
     //const dim3 gridDim = choose_grid_force_big(BLOCK_SIZE, 8);
-    const dim3 gridDim  = choose_grid_fullwaves((void*)compactPointsBitmask, BLOCK_SIZE, /*waves=*/2);
+    const dim3 gridDim  = choose_grid_fullwaves((void*)compactPointsBitmask, g_block_size, /*waves=*/2);
 
     cudaMemset(d_count, 0, sizeof(int));
 
@@ -829,9 +839,11 @@ void compact_points_bitmask_surface(
     int num_points,
     int surface_width
 ) {
-    dim3 blockDim(BLOCK_SIZE);
+    //dim3 blockDim(BLOCK_SIZE);
+    dim3 blockDim(g_block_size);
     //dim3 gridDim((num_points + blockDim.x - 1) / blockDim.x);
-    const dim3 gridDim = choose_grid_force_big(BLOCK_SIZE, 8);
+    //const dim3 gridDim = choose_grid_force_big(BLOCK_SIZE, 8);
+    const dim3 gridDim = choose_grid_force_big(g_block_size, 8);
 
     cudaMemset(d_count, 0, sizeof(int));  // ensure count starts from 0
 
