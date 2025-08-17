@@ -12,6 +12,9 @@
 #include "benchmark_utils.h"      // print_csv_header(), choose_threshold_for_rate()
 #include "stream_compaction_bin.h" // BreakdownPlanA/B, testPlanA/B_breakdown()
 
+#include <thrust/device_vector.h>
+#include <thrust/copy.h>
+
 struct Args {
   std::size_t N       = 20'000'000;        // default dataset size
   int         kBits   = 8;                 // default: 256 bins
@@ -45,3 +48,12 @@ static void run_q1_microbench(const std::vector<Point2D>& input, int kBits,
 static void run_q2_microbench(const std::vector<Point2D>& input,
                               int kBits,
                               const std::vector<double>& hit_rates);
+
+static void run_thrust_baseline_with_buffers(
+    const std::vector<Point2D>& h_input,
+    float thr,
+    thrust::device_vector<Point2D>& d_in,   // 预分配，大小 == N
+    thrust::device_vector<Point2D>& d_out,  // 预分配，大小 == N
+    /* OUT */ float& kernel_ms,
+    /* OUT */ float& e2e_ms,
+    /* OUT */ size_t& total_valid);

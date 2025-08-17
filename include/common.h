@@ -25,6 +25,7 @@
 /// Default CUDA thread-block size used across kernels
 #define BLOCK_SIZE 256
 
+
 // ────────────────────────────────────────────────────────────────
 // Morton encoding
 // ────────────────────────────────────────────────────────────────
