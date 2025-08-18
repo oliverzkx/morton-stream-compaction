@@ -1,0 +1,7 @@
+dist,impl,n,agg_ms_mean,agg_ms_std,e2e_ms_mean,e2e_ms_std
+uniform,atomic,5,2.701,2.346,11.436,19.060
+uniform,slices,5,0.011,0.001,138.737,8.143
+clustered,atomic,5,1.798,0.537,9.551,15.275
+clustered,slices,5,0.026,0.021,140.030,3.131
+skewed,atomic,5,1.620,0.031,10.325,16.609
+skewed,slices,5,0.019,0.012,137.736,8.326

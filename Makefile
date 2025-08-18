@@ -40,6 +40,9 @@ Q5_SRCS := src/q5_scalability.cu src/benchmark_utils.cu $(COMMON_SRCS)
 # ========= Q6: ablation study (gather/no-gather, binning/no-binning, force) =
 Q6_SRCS := src/q6_ablation.cu src/benchmark_utils.cu $(COMMON_SRCS)
 
+# ========= Q7: per-bin aggregation proxy (atomic vs slices) =================
+Q7_SRCS := src/q7_proxy_bins_agg.cu $(COMMON_SRCS)
+
 # ========= object file lists ================================================
 MAIN_OBJS      := $(MAIN_SRCS:src/%.cu=build/%.o)
 BENCHMARK_OBJS := $(BENCHMARK_SRCS:src/%.cu=build/%.o)
@@ -48,6 +51,7 @@ Q3_OBJS        := $(Q3_SRCS:src/%.cu=build/%.o)
 Q4_OBJS        := $(Q4_SRCS:src/%.cu=build/%.o)
 Q5_OBJS        := $(Q5_SRCS:src/%.cu=build/%.o)
 Q6_OBJS        := $(Q6_SRCS:src/%.cu=build/%.o)
+Q7_OBJS        := $(Q7_SRCS:src/%.cu=build/%.o)
 
 # ========= final binaries ====================================================
 TARGET     := build/main
@@ -57,6 +61,7 @@ Q3_BIN     := build/q3_param_sweep
 Q4_BIN     := build/q4_distribution
 Q5_BIN     := build/q5_scalability
 Q6_BIN     := build/q6_ablation
+Q7_BIN     := build/q7_proxy
 
 # ========= CSV output dir & files ===========================================
 CSV_DIR        := csv
@@ -110,8 +115,18 @@ Q6_SEED     ?= 1234
 Q6_REPEATS  ?= 5
 Q6_BLOCK    ?= 256
 
+# Q7 CSV (per-bin aggregation proxy)
+Q7_CSV      := $(CSV_DIR)/q7_proxy.csv
+Q7_N        ?= 20000000
+Q7_KBITS    ?= 8
+Q7_HIT      ?= 0.50
+Q7_DIST     ?= uniform          # uniform|clustered|skewed
+Q7_SEED     ?= 1234
+Q7_REPEAT   ?= 5
+Q7_BLOCK    ?= 256
+
 # ========= default target ====================================================
-all: $(TARGET) $(BENCHMARK) $(Q1_BIN) $(Q3_BIN) $(Q4_BIN) $(Q5_BIN) $(Q6_BIN)
+all: $(TARGET) $(BENCHMARK) $(Q1_BIN) $(Q3_BIN) $(Q4_BIN) $(Q5_BIN) $(Q6_BIN) $(Q7_BIN)
 	@echo "✔️  Build finished ($(BUILD))"
 
 # ========= compile step (.cu → .o) ==========================================
@@ -139,6 +154,9 @@ $(Q5_BIN): $(Q5_OBJS)
 	$(NVCC) $(CXXFLAGS) $(INCLUDES) -o $@ $^
 
 $(Q6_BIN): $(Q6_OBJS)
+	$(NVCC) $(CXXFLAGS) $(INCLUDES) -o $@ $^
+
+$(Q7_BIN): $(Q7_OBJS)
 	$(NVCC) $(CXXFLAGS) $(INCLUDES) -o $@ $^
 
 # ========= run Q1 and dump CSV ==============================================
@@ -238,6 +256,14 @@ q6: $(Q6_BIN) | $(CSV_DIR)
 	tail -n +2 $$tmp >> $(Q6_CSV); rm -f $$tmp
 	@echo "✔️  Q6 CSV written: $(Q6_CSV)"
 
+# ========= run Q7 per-bin aggregation proxy and dump CSV ====================
+q7: $(Q7_BIN) | $(CSV_DIR)
+	@echo "→ Running Q7: per-bin aggregation proxy → $(Q7_CSV)"
+	$(Q7_BIN) --N $(Q7_N) --k $(Q7_KBITS) --hit $(Q7_HIT) --dist $(Q7_DIST) \
+	          --seed $(Q7_SEED) --block $(Q7_BLOCK) --repeat $(Q7_REPEAT) \
+	          --csv $(Q7_CSV)
+	@echo "✔️  Q7 CSV written: $(Q7_CSV)"
+
 # ========= plotting (optional convenience) ==================================
 plot_q3:
 	python3 scripts/plot_q3.py
@@ -254,4 +280,4 @@ $(CSV_DIR):
 clean:
 	rm -rf build $(CSV_DIR)
 
-.PHONY: all clean q1 q3block q3 q4 q5 q6 plot_q3 plot_q4
+.PHONY: all clean q1 q3block q3 q4 q5 q6 q7 plot_q3 plot_q4
